@@ -1,0 +1,57 @@
+# GraphQL schema example
+#
+# https://gqlgen.com/getting-started/
+
+type List {
+  id: ID!
+  name: String!
+  cards: [Card]
+}
+
+type Card {
+  id: ID!
+  name: String!
+  dueDate: String
+  parentListId: ID!
+}
+
+# type Todo {
+#   id: ID!
+#   text: String!
+#   done: Boolean!
+#   user: User!
+# }
+
+# type User {
+#   id: ID!
+#   name: String!
+# }
+
+# type Query {
+#   todos: [Todo!]!
+# }
+
+# input NewTodo {
+#   text: String!
+#   userId: String!
+# }
+
+input NewCard {
+  name: String!
+  dueDate: String
+  parentListId: ID!
+}
+
+input NewList {
+  name: String!
+}
+
+type Mutation {
+  createCard(card: NewCard!): Card!
+  createList(list: NewList!): List!
+}
+
+type Query {
+  getCard(id: ID!): Card
+  getList(id: ID!): List
+}
