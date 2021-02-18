@@ -2,8 +2,8 @@ package handler
 
 import (
 	"context"
-	"fmt"
 
+	"github.com/jx3yang/ProductivityTracker/src/backend/constants"
 	db "github.com/jx3yang/ProductivityTracker/src/backend/database"
 	"github.com/jx3yang/ProductivityTracker/src/backend/graph/model"
 	"go.mongodb.org/mongo-driver/bson"
@@ -27,7 +27,7 @@ func FindCardByID(ID string) (*model.Card, error) {
 }
 
 func FindAllFromList(listID string) ([]*model.Card, error) {
-	cursor, err := cardCollection.FindAll(bson.M{"parentListId": listID})
+	cursor, err := cardCollection.FindAll(bson.M{constants.ParentListIDField: listID})
 	if err != nil {
 		return nil, err
 	}
@@ -35,7 +35,6 @@ func FindAllFromList(listID string) ([]*model.Card, error) {
 	if err = cursor.All(context.TODO(), &cards); err != nil {
 		return nil, err
 	}
-	fmt.Println(cards)
 	return cards, nil
 }
 
@@ -53,7 +52,7 @@ func CreateCard(card *model.NewCard) (*model.Card, error) {
 			return nil, err
 		}
 		newOrder := append(list.CardOrder, res)
-		update := bson.M{"$set": bson.M{"cardOrder": newOrder}}
+		update := bson.M{"$set": bson.M{constants.CardOrderField: newOrder}}
 		err = listCollection.UpdateByID(list.ID.Hex(), update)
 		if err != nil {
 			return nil, err

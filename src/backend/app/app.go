@@ -10,6 +10,7 @@ import (
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/jx3yang/ProductivityTracker/src/backend/config"
+	"github.com/jx3yang/ProductivityTracker/src/backend/constants"
 	db "github.com/jx3yang/ProductivityTracker/src/backend/database"
 	"github.com/jx3yang/ProductivityTracker/src/backend/graph"
 	"github.com/jx3yang/ProductivityTracker/src/backend/graph/generated"
@@ -57,7 +58,7 @@ func Run() {
 	conn, err := db.InitConnectionFromConfig(configuration)
 	handleErr(err)
 
-	database := conn.InitDatabase(db.PT)
+	database := conn.InitDatabase(constants.PT)
 	err = coll_handler.InitHandlers(database)
 	handleErr(err)
 

@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 
+	"github.com/jx3yang/ProductivityTracker/src/backend/constants"
 	db "github.com/jx3yang/ProductivityTracker/src/backend/database"
 	model "github.com/jx3yang/ProductivityTracker/src/backend/graph/model"
 	"go.mongodb.org/mongo-driver/bson"
@@ -71,7 +72,7 @@ func CreateList(list *model.NewList) (*model.List, error) {
 			return nil, err
 		}
 		newOrder := append(board.ListOrder, res)
-		update := bson.M{"$set": bson.M{"listOrder": newOrder}}
+		update := bson.M{"$set": bson.M{constants.ListOrderField: newOrder}}
 		err = boardCollection.UpdateByID(board.ID.Hex(), update)
 		if err != nil {
 			return nil, err

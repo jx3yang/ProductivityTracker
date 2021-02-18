@@ -3,10 +3,10 @@ package database
 import (
 	"context"
 	"errors"
-	"fmt"
 	"time"
 
 	"github.com/jx3yang/ProductivityTracker/src/backend/config"
+	"github.com/jx3yang/ProductivityTracker/src/backend/constants"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -15,8 +15,6 @@ import (
 
 const tenSeconds = 10 * time.Second
 const thirtySeconds = 30 * time.Second
-
-const idField = "_id"
 
 var Client *MongoConnection
 
@@ -75,7 +73,7 @@ func (coll *MongoCollection) FindByIDWithTimeout(ID string, timeout time.Duratio
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
-	return coll.collection.FindOne(ctx, bson.M{idField: ObjectID}), nil
+	return coll.collection.FindOne(ctx, bson.M{constants.IDField: ObjectID}), nil
 }
 
 func (coll *MongoCollection) FindByID(ID string) (*mongo.SingleResult, error) {
@@ -114,8 +112,7 @@ func (coll *MongoCollection) UpdateByIDWithTimeout(ID string, update interface{}
 	if err != nil {
 		return err
 	}
-	filter := bson.M{idField: ObjectID}
-	fmt.Println(ObjectID)
+	filter := bson.M{constants.IDField: ObjectID}
 	opts := options.Update().SetUpsert(false)
 	_, err = coll.collection.UpdateOne(ctx, filter, update, opts)
 	if err != nil {
