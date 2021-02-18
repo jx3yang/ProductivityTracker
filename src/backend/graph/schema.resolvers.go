@@ -5,19 +5,22 @@ package graph
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/jx3yang/ProductivityTracker/src/backend/graph/generated"
 	"github.com/jx3yang/ProductivityTracker/src/backend/graph/model"
-	handler "github.com/jx3yang/ProductivityTracker/src/backend/handler"
+	"github.com/jx3yang/ProductivityTracker/src/backend/handler"
 )
 
 func (r *mutationResolver) CreateCard(ctx context.Context, card model.NewCard) (*model.Card, error) {
-	panic(fmt.Errorf("not implemented"))
+	return handler.CreateCard(&card)
 }
 
 func (r *mutationResolver) CreateList(ctx context.Context, list model.NewList) (*model.List, error) {
-	panic(fmt.Errorf("not implemented"))
+	return handler.CreateList(&list)
+}
+
+func (r *mutationResolver) CreateBoard(ctx context.Context, board model.NewBoard) (*model.Board, error) {
+	return handler.CreateBoard(&board)
 }
 
 func (r *queryResolver) GetCard(ctx context.Context, id string) (*model.Card, error) {
@@ -26,6 +29,10 @@ func (r *queryResolver) GetCard(ctx context.Context, id string) (*model.Card, er
 
 func (r *queryResolver) GetList(ctx context.Context, id string) (*model.List, error) {
 	return handler.FindListByID(id)
+}
+
+func (r *queryResolver) GetBoard(ctx context.Context, id string) (*model.Board, error) {
+	return handler.FindBoardByID(id)
 }
 
 // Mutation returns generated.MutationResolver implementation.

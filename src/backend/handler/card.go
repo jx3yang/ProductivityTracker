@@ -20,3 +20,20 @@ func FindCardByID(ID string) (*model.Card, error) {
 	res.Decode(&card)
 	return &card, nil
 }
+
+func CreateCard(card *model.NewCard) (*model.Card, error) {
+	_, err := FindListByID(card.ParentListID)
+	if err != nil {
+		return nil, err
+	}
+	res, err := cardCollection.InsertOne(card)
+	if err != nil {
+		return nil, err
+	}
+	return &model.Card{
+		ID:           res,
+		Name:         card.Name,
+		DueDate:      card.DueDate,
+		ParentListID: card.ParentListID,
+	}, nil
+}

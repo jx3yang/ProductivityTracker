@@ -2,17 +2,28 @@
 
 package model
 
+type Board struct {
+	ID    string  `json:"_id"`
+	Name  string  `json:"name"`
+	Lists []*List `json:"lists"`
+}
+
 type Card struct {
-	ID           string  `json:"id"`
+	ID           string  `json:"_id"`
 	Name         string  `json:"name"`
 	DueDate      *string `json:"dueDate"`
 	ParentListID string  `json:"parentListId"`
 }
 
 type List struct {
-	ID    string  `json:"id"`
-	Name  string  `json:"name"`
-	Cards []*Card `json:"cards"`
+	ID            string  `json:"_id"`
+	Name          string  `json:"name"`
+	ParentBoardID string  `json:"parentBoardId"`
+	Cards         []*Card `json:"cards"`
+}
+
+type NewBoard struct {
+	Name string `json:"name"`
 }
 
 type NewCard struct {
@@ -22,5 +33,6 @@ type NewCard struct {
 }
 
 type NewList struct {
-	Name string `json:"name"`
+	Name          string `json:"name"`
+	ParentBoardID string `json:"parentBoardId"`
 }

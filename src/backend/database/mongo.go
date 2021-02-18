@@ -17,7 +17,8 @@ const thirtySeconds = 30 * time.Second
 const idField = "_id"
 
 func ConnectionFromConfig(c *config.Config) (*MongoConnection, error) {
-	uri := "mongodb://" + c.DBUsername + ":" + c.DBPassword + "@" + c.DBHost + ":" + c.DBPort
+	// TODO: add credentials
+	uri := "mongodb://" + c.DBHost + ":" + c.DBPort
 	return newMongoConnection(uri)
 }
 

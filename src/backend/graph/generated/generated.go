@@ -42,6 +42,12 @@ type DirectiveRoot struct {
 }
 
 type ComplexityRoot struct {
+	Board struct {
+		ID    func(childComplexity int) int
+		Lists func(childComplexity int) int
+		Name  func(childComplexity int) int
+	}
+
 	Card struct {
 		DueDate      func(childComplexity int) int
 		ID           func(childComplexity int) int
@@ -50,29 +56,34 @@ type ComplexityRoot struct {
 	}
 
 	List struct {
-		Cards func(childComplexity int) int
-		ID    func(childComplexity int) int
-		Name  func(childComplexity int) int
+		Cards         func(childComplexity int) int
+		ID            func(childComplexity int) int
+		Name          func(childComplexity int) int
+		ParentBoardID func(childComplexity int) int
 	}
 
 	Mutation struct {
-		CreateCard func(childComplexity int, card model.NewCard) int
-		CreateList func(childComplexity int, list model.NewList) int
+		CreateBoard func(childComplexity int, board model.NewBoard) int
+		CreateCard  func(childComplexity int, card model.NewCard) int
+		CreateList  func(childComplexity int, list model.NewList) int
 	}
 
 	Query struct {
-		GetCard func(childComplexity int, id string) int
-		GetList func(childComplexity int, id string) int
+		GetBoard func(childComplexity int, id string) int
+		GetCard  func(childComplexity int, id string) int
+		GetList  func(childComplexity int, id string) int
 	}
 }
 
 type MutationResolver interface {
 	CreateCard(ctx context.Context, card model.NewCard) (*model.Card, error)
 	CreateList(ctx context.Context, list model.NewList) (*model.List, error)
+	CreateBoard(ctx context.Context, board model.NewBoard) (*model.Board, error)
 }
 type QueryResolver interface {
 	GetCard(ctx context.Context, id string) (*model.Card, error)
 	GetList(ctx context.Context, id string) (*model.List, error)
+	GetBoard(ctx context.Context, id string) (*model.Board, error)
 }
 
 type executableSchema struct {
@@ -90,6 +101,27 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 	_ = ec
 	switch typeName + "." + field {
 
+	case "Board._id":
+		if e.complexity.Board.ID == nil {
+			break
+		}
+
+		return e.complexity.Board.ID(childComplexity), true
+
+	case "Board.lists":
+		if e.complexity.Board.Lists == nil {
+			break
+		}
+
+		return e.complexity.Board.Lists(childComplexity), true
+
+	case "Board.name":
+		if e.complexity.Board.Name == nil {
+			break
+		}
+
+		return e.complexity.Board.Name(childComplexity), true
+
 	case "Card.dueDate":
 		if e.complexity.Card.DueDate == nil {
 			break
@@ -97,7 +129,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Card.DueDate(childComplexity), true
 
-	case "Card.id":
+	case "Card._id":
 		if e.complexity.Card.ID == nil {
 			break
 		}
@@ -125,7 +157,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.List.Cards(childComplexity), true
 
-	case "List.id":
+	case "List._id":
 		if e.complexity.List.ID == nil {
 			break
 		}
@@ -138,6 +170,25 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.List.Name(childComplexity), true
+
+	case "List.parentBoardId":
+		if e.complexity.List.ParentBoardID == nil {
+			break
+		}
+
+		return e.complexity.List.ParentBoardID(childComplexity), true
+
+	case "Mutation.createBoard":
+		if e.complexity.Mutation.CreateBoard == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_createBoard_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.CreateBoard(childComplexity, args["board"].(model.NewBoard)), true
 
 	case "Mutation.createCard":
 		if e.complexity.Mutation.CreateCard == nil {
@@ -162,6 +213,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.CreateList(childComplexity, args["list"].(model.NewList)), true
+
+	case "Query.getBoard":
+		if e.complexity.Query.GetBoard == nil {
+			break
+		}
+
+		args, err := ec.field_Query_getBoard_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.GetBoard(childComplexity, args["id"].(string)), true
 
 	case "Query.getCard":
 		if e.complexity.Query.GetCard == nil {
@@ -255,39 +318,25 @@ var sources = []*ast.Source{
 #
 # https://gqlgen.com/getting-started/
 
-type List {
-  id: ID!
+type Board {
+  _id: ID!
   name: String!
+  lists: [List]
+}
+
+type List {
+  _id: ID!
+  name: String!
+  parentBoardId: ID!
   cards: [Card]
 }
 
 type Card {
-  id: ID!
+  _id: ID!
   name: String!
   dueDate: String
   parentListId: ID!
 }
-
-# type Todo {
-#   id: ID!
-#   text: String!
-#   done: Boolean!
-#   user: User!
-# }
-
-# type User {
-#   id: ID!
-#   name: String!
-# }
-
-# type Query {
-#   todos: [Todo!]!
-# }
-
-# input NewTodo {
-#   text: String!
-#   userId: String!
-# }
 
 input NewCard {
   name: String!
@@ -297,16 +346,23 @@ input NewCard {
 
 input NewList {
   name: String!
+  parentBoardId: ID!
+}
+
+input NewBoard {
+  name: String!
 }
 
 type Mutation {
   createCard(card: NewCard!): Card!
   createList(list: NewList!): List!
+  createBoard(board: NewBoard!): Board!
 }
 
 type Query {
   getCard(id: ID!): Card
   getList(id: ID!): List
+  getBoard(id: ID!): Board
 }
 `, BuiltIn: false},
 }
@@ -315,6 +371,21 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 // endregion ************************** generated!.gotpl **************************
 
 // region    ***************************** args.gotpl *****************************
+
+func (ec *executionContext) field_Mutation_createBoard_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.NewBoard
+	if tmp, ok := rawArgs["board"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("board"))
+		arg0, err = ec.unmarshalNNewBoard2githubᚗcomᚋjx3yangᚋProductivityTrackerᚋsrcᚋbackendᚋgraphᚋmodelᚐNewBoard(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["board"] = arg0
+	return args, nil
+}
 
 func (ec *executionContext) field_Mutation_createCard_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
@@ -358,6 +429,21 @@ func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs
 		}
 	}
 	args["name"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_getBoard_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["id"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+		arg0, err = ec.unmarshalNID2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["id"] = arg0
 	return args, nil
 }
 
@@ -429,7 +515,109 @@ func (ec *executionContext) field___Type_fields_args(ctx context.Context, rawArg
 
 // region    **************************** field.gotpl *****************************
 
-func (ec *executionContext) _Card_id(ctx context.Context, field graphql.CollectedField, obj *model.Card) (ret graphql.Marshaler) {
+func (ec *executionContext) _Board__id(ctx context.Context, field graphql.CollectedField, obj *model.Board) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Board",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNID2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Board_name(ctx context.Context, field graphql.CollectedField, obj *model.Board) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Board",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Name, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Board_lists(ctx context.Context, field graphql.CollectedField, obj *model.Board) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Board",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Lists, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*model.List)
+	fc.Result = res
+	return ec.marshalOList2ᚕᚖgithubᚗcomᚋjx3yangᚋProductivityTrackerᚋsrcᚋbackendᚋgraphᚋmodelᚐList(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Card__id(ctx context.Context, field graphql.CollectedField, obj *model.Card) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -566,7 +754,7 @@ func (ec *executionContext) _Card_parentListId(ctx context.Context, field graphq
 	return ec.marshalNID2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _List_id(ctx context.Context, field graphql.CollectedField, obj *model.List) (ret graphql.Marshaler) {
+func (ec *executionContext) _List__id(ctx context.Context, field graphql.CollectedField, obj *model.List) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -634,6 +822,41 @@ func (ec *executionContext) _List_name(ctx context.Context, field graphql.Collec
 	res := resTmp.(string)
 	fc.Result = res
 	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _List_parentBoardId(ctx context.Context, field graphql.CollectedField, obj *model.List) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "List",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ParentBoardID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNID2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _List_cards(ctx context.Context, field graphql.CollectedField, obj *model.List) (ret graphql.Marshaler) {
@@ -752,6 +975,48 @@ func (ec *executionContext) _Mutation_createList(ctx context.Context, field grap
 	return ec.marshalNList2ᚖgithubᚗcomᚋjx3yangᚋProductivityTrackerᚋsrcᚋbackendᚋgraphᚋmodelᚐList(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Mutation_createBoard(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_createBoard_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().CreateBoard(rctx, args["board"].(model.NewBoard))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Board)
+	fc.Result = res
+	return ec.marshalNBoard2ᚖgithubᚗcomᚋjx3yangᚋProductivityTrackerᚋsrcᚋbackendᚋgraphᚋmodelᚐBoard(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Query_getCard(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -828,6 +1093,45 @@ func (ec *executionContext) _Query_getList(ctx context.Context, field graphql.Co
 	res := resTmp.(*model.List)
 	fc.Result = res
 	return ec.marshalOList2ᚖgithubᚗcomᚋjx3yangᚋProductivityTrackerᚋsrcᚋbackendᚋgraphᚋmodelᚐList(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_getBoard(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_getBoard_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().GetBoard(rctx, args["id"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.Board)
+	fc.Result = res
+	return ec.marshalOBoard2ᚖgithubᚗcomᚋjx3yangᚋProductivityTrackerᚋsrcᚋbackendᚋgraphᚋmodelᚐBoard(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query___type(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -1988,6 +2292,26 @@ func (ec *executionContext) ___Type_ofType(ctx context.Context, field graphql.Co
 
 // region    **************************** input.gotpl *****************************
 
+func (ec *executionContext) unmarshalInputNewBoard(ctx context.Context, obj interface{}) (model.NewBoard, error) {
+	var it model.NewBoard
+	var asMap = obj.(map[string]interface{})
+
+	for k, v := range asMap {
+		switch k {
+		case "name":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+			it.Name, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputNewCard(ctx context.Context, obj interface{}) (model.NewCard, error) {
 	var it model.NewCard
 	var asMap = obj.(map[string]interface{})
@@ -2038,6 +2362,14 @@ func (ec *executionContext) unmarshalInputNewList(ctx context.Context, obj inter
 			if err != nil {
 				return it, err
 			}
+		case "parentBoardId":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("parentBoardId"))
+			it.ParentBoardID, err = ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
 		}
 	}
 
@@ -2052,6 +2384,40 @@ func (ec *executionContext) unmarshalInputNewList(ctx context.Context, obj inter
 
 // region    **************************** object.gotpl ****************************
 
+var boardImplementors = []string{"Board"}
+
+func (ec *executionContext) _Board(ctx context.Context, sel ast.SelectionSet, obj *model.Board) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, boardImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Board")
+		case "_id":
+			out.Values[i] = ec._Board__id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "name":
+			out.Values[i] = ec._Board_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "lists":
+			out.Values[i] = ec._Board_lists(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
 var cardImplementors = []string{"Card"}
 
 func (ec *executionContext) _Card(ctx context.Context, sel ast.SelectionSet, obj *model.Card) graphql.Marshaler {
@@ -2063,8 +2429,8 @@ func (ec *executionContext) _Card(ctx context.Context, sel ast.SelectionSet, obj
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Card")
-		case "id":
-			out.Values[i] = ec._Card_id(ctx, field, obj)
+		case "_id":
+			out.Values[i] = ec._Card__id(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
@@ -2102,13 +2468,18 @@ func (ec *executionContext) _List(ctx context.Context, sel ast.SelectionSet, obj
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("List")
-		case "id":
-			out.Values[i] = ec._List_id(ctx, field, obj)
+		case "_id":
+			out.Values[i] = ec._List__id(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
 		case "name":
 			out.Values[i] = ec._List_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "parentBoardId":
+			out.Values[i] = ec._List_parentBoardId(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
@@ -2147,6 +2518,11 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			}
 		case "createList":
 			out.Values[i] = ec._Mutation_createList(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "createBoard":
+			out.Values[i] = ec._Mutation_createBoard(ctx, field)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
@@ -2196,6 +2572,17 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_getList(ctx, field)
+				return res
+			})
+		case "getBoard":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_getBoard(ctx, field)
 				return res
 			})
 		case "__type":
@@ -2458,6 +2845,20 @@ func (ec *executionContext) ___Type(ctx context.Context, sel ast.SelectionSet, o
 
 // region    ***************************** type.gotpl *****************************
 
+func (ec *executionContext) marshalNBoard2githubᚗcomᚋjx3yangᚋProductivityTrackerᚋsrcᚋbackendᚋgraphᚋmodelᚐBoard(ctx context.Context, sel ast.SelectionSet, v model.Board) graphql.Marshaler {
+	return ec._Board(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNBoard2ᚖgithubᚗcomᚋjx3yangᚋProductivityTrackerᚋsrcᚋbackendᚋgraphᚋmodelᚐBoard(ctx context.Context, sel ast.SelectionSet, v *model.Board) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._Board(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNBoolean2bool(ctx context.Context, v interface{}) (bool, error) {
 	res, err := graphql.UnmarshalBoolean(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -2514,6 +2915,11 @@ func (ec *executionContext) marshalNList2ᚖgithubᚗcomᚋjx3yangᚋProductivit
 		return graphql.Null
 	}
 	return ec._List(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNNewBoard2githubᚗcomᚋjx3yangᚋProductivityTrackerᚋsrcᚋbackendᚋgraphᚋmodelᚐNewBoard(ctx context.Context, v interface{}) (model.NewBoard, error) {
+	res, err := ec.unmarshalInputNewBoard(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalNNewCard2githubᚗcomᚋjx3yangᚋProductivityTrackerᚋsrcᚋbackendᚋgraphᚋmodelᚐNewCard(ctx context.Context, v interface{}) (model.NewCard, error) {
@@ -2770,6 +3176,13 @@ func (ec *executionContext) marshalN__TypeKind2string(ctx context.Context, sel a
 	return res
 }
 
+func (ec *executionContext) marshalOBoard2ᚖgithubᚗcomᚋjx3yangᚋProductivityTrackerᚋsrcᚋbackendᚋgraphᚋmodelᚐBoard(ctx context.Context, sel ast.SelectionSet, v *model.Board) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._Board(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalOBoolean2bool(ctx context.Context, v interface{}) (bool, error) {
 	res, err := graphql.UnmarshalBoolean(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -2839,6 +3252,46 @@ func (ec *executionContext) marshalOCard2ᚖgithubᚗcomᚋjx3yangᚋProductivit
 		return graphql.Null
 	}
 	return ec._Card(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOList2ᚕᚖgithubᚗcomᚋjx3yangᚋProductivityTrackerᚋsrcᚋbackendᚋgraphᚋmodelᚐList(ctx context.Context, sel ast.SelectionSet, v []*model.List) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalOList2ᚖgithubᚗcomᚋjx3yangᚋProductivityTrackerᚋsrcᚋbackendᚋgraphᚋmodelᚐList(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+	return ret
 }
 
 func (ec *executionContext) marshalOList2ᚖgithubᚗcomᚋjx3yangᚋProductivityTrackerᚋsrcᚋbackendᚋgraphᚋmodelᚐList(ctx context.Context, sel ast.SelectionSet, v *model.List) graphql.Marshaler {

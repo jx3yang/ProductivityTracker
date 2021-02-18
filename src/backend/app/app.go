@@ -1,7 +1,6 @@
 package app
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -52,7 +51,6 @@ func Run() {
 	} else {
 		*configFile = devConfigFile
 	}
-	fmt.Println(*configFile)
 	configuration, err := config.GetConfig(configFile)
 	handleErr(err)
 

@@ -20,3 +20,18 @@ func FindListByID(ID string) (*model.List, error) {
 	res.Decode(&list)
 	return &list, nil
 }
+
+func CreateList(list *model.NewList) (*model.List, error) {
+	_, err := boardCollection.FindByID(list.ParentBoardID)
+	if err != nil {
+		return nil, err
+	}
+	id, err := listCollection.InsertOne(list)
+	if err != nil {
+		return nil, err
+	}
+	return &model.List{
+		ID:   id,
+		Name: list.Name,
+	}, nil
+}
