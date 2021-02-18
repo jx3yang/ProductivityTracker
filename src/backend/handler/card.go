@@ -5,12 +5,10 @@ import (
 	model "github.com/jx3yang/ProductivityTracker/src/backend/graph/model"
 )
 
-const cardCollectionName = "card"
-
 var cardCollection *db.MongoCollection
 
-func InitCardCollection(m *db.MongoConnection) {
-	cardCollection = m.InitCollection(cardCollectionName)
+func initCardCollection(d *db.MongoDatabase) {
+	cardCollection = d.InitCollection(cardCollectionName)
 }
 
 func FindCardByID(ID string) (*model.Card, error) {

@@ -1,0 +1,11 @@
+version: '3.9'
+
+services:
+  mongo:
+    image: 'mongo:4.2.6-bionic'
+    container_name: mongo_db
+    ports: 
+      - '27017:27017'
+    restart: always
+    volumes:
+      - ./data:/data/db
