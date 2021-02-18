@@ -54,7 +54,7 @@ func Run() {
 	configuration, err := config.GetConfig(configFile)
 	handleErr(err)
 
-	conn, err := db.ConnectionFromConfig(configuration)
+	conn, err := db.InitConnectionFromConfig(configuration)
 	handleErr(err)
 
 	database := conn.InitDatabase(db.PT)

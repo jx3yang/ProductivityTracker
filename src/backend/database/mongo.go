@@ -2,6 +2,8 @@ package database
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"time"
 
 	"github.com/jx3yang/ProductivityTracker/src/backend/config"
@@ -16,10 +18,17 @@ const thirtySeconds = 30 * time.Second
 
 const idField = "_id"
 
-func ConnectionFromConfig(c *config.Config) (*MongoConnection, error) {
+var Client *MongoConnection
+
+func InitConnectionFromConfig(c *config.Config) (*MongoConnection, error) {
 	// TODO: add credentials
 	uri := "mongodb://" + c.DBHost + ":" + c.DBPort
-	return newMongoConnection(uri)
+	client, err := newMongoConnection(uri)
+	if err != nil {
+		return nil, err
+	}
+	Client = client
+	return Client, nil
 }
 
 func newMongoConnection(uri string) (*MongoConnection, error) {
@@ -38,6 +47,13 @@ func newMongoConnection(uri string) (*MongoConnection, error) {
 	return &MongoConnection{
 		client: client,
 	}, nil
+}
+
+func StartSession() (mongo.Session, error) {
+	if Client == nil {
+		return nil, errors.New("No connection")
+	}
+	return Client.client.StartSession()
 }
 
 func (conn *MongoConnection) InitDatabase(database string) *MongoDatabase {
@@ -66,6 +82,17 @@ func (coll *MongoCollection) FindByID(ID string) (*mongo.SingleResult, error) {
 	return coll.FindByIDWithTimeout(ID, tenSeconds)
 }
 
+func (coll *MongoCollection) FindAllWithTimeout(filter interface{}, timeout time.Duration) (*mongo.Cursor, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+
+	return coll.collection.Find(ctx, filter)
+}
+
+func (coll *MongoCollection) FindAll(filter interface{}) (*mongo.Cursor, error) {
+	return coll.FindAllWithTimeout(filter, thirtySeconds)
+}
+
 func (coll *MongoCollection) InsertOneWithTimeout(document interface{}, timeout time.Duration) (string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
@@ -78,4 +105,25 @@ func (coll *MongoCollection) InsertOneWithTimeout(document interface{}, timeout 
 
 func (coll *MongoCollection) InsertOne(document interface{}) (string, error) {
 	return coll.InsertOneWithTimeout(document, tenSeconds)
+}
+
+func (coll *MongoCollection) UpdateByIDWithTimeout(ID string, update interface{}, timeout time.Duration) error {
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	ObjectID, err := primitive.ObjectIDFromHex(ID)
+	if err != nil {
+		return err
+	}
+	filter := bson.M{idField: ObjectID}
+	fmt.Println(ObjectID)
+	opts := options.Update().SetUpsert(false)
+	_, err = coll.collection.UpdateOne(ctx, filter, update, opts)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (coll *MongoCollection) UpdateByID(ID string, update interface{}) error {
+	return coll.UpdateByIDWithTimeout(ID, update, tenSeconds)
 }

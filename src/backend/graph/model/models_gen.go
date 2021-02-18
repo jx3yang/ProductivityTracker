@@ -3,36 +3,44 @@
 package model
 
 type Board struct {
-	ID    string  `json:"_id"`
-	Name  string  `json:"name"`
-	Lists []*List `json:"lists"`
+	ID    string  `json:"_id" bson:"_id"`
+	Name  string  `json:"name" bson:"name"`
+	Lists []*List `json:"lists" bson:"lists"`
 }
 
 type Card struct {
-	ID           string  `json:"_id"`
-	Name         string  `json:"name"`
-	DueDate      *string `json:"dueDate"`
-	ParentListID string  `json:"parentListId"`
+	ID            string  `json:"_id" bson:"_id"`
+	Name          string  `json:"name" bson:"name"`
+	DueDate       *string `json:"dueDate" bson:"dueDate"`
+	ParentBoardID string  `json:"parentBoardId" bson:"parentBoardId"`
+	ParentListID  string  `json:"parentListId" bson:"parentListId"`
+}
+
+type CardMetaData struct {
+	ID      string  `json:"_id" bson:"_id"`
+	Name    string  `json:"name" bson:"name"`
+	DueDate *string `json:"dueDate" bson:"dueDate"`
 }
 
 type List struct {
-	ID            string  `json:"_id"`
-	Name          string  `json:"name"`
-	ParentBoardID string  `json:"parentBoardId"`
-	Cards         []*Card `json:"cards"`
+	ID            string          `json:"_id" bson:"_id"`
+	Name          string          `json:"name" bson:"name"`
+	ParentBoardID string          `json:"parentBoardId" bson:"parentBoardId"`
+	Cards         []*CardMetaData `json:"cards" bson:"cards"`
 }
 
 type NewBoard struct {
-	Name string `json:"name"`
+	Name string `json:"name" bson:"name"`
 }
 
 type NewCard struct {
-	Name         string  `json:"name"`
-	DueDate      *string `json:"dueDate"`
-	ParentListID string  `json:"parentListId"`
+	Name          string  `json:"name" bson:"name"`
+	DueDate       *string `json:"dueDate" bson:"dueDate"`
+	ParentBoardID string  `json:"parentBoardId" bson:"parentBoardId"`
+	ParentListID  string  `json:"parentListId" bson:"parentListId"`
 }
 
 type NewList struct {
-	Name          string `json:"name"`
-	ParentBoardID string `json:"parentBoardId"`
+	Name          string `json:"name" bson:"name"`
+	ParentBoardID string `json:"parentBoardId" bson:"parentBoardId"`
 }

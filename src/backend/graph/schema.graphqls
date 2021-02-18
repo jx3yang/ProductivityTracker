@@ -5,26 +5,34 @@
 type Board {
   _id: ID!
   name: String!
-  lists: [List]
+  lists: [List!]
 }
 
 type List {
   _id: ID!
   name: String!
   parentBoardId: ID!
-  cards: [Card]
+  cards: [CardMetaData!]
+}
+
+type CardMetaData {
+  _id: ID!
+  name: String!
+  dueDate: String
 }
 
 type Card {
   _id: ID!
   name: String!
   dueDate: String
+  parentBoardId: ID!
   parentListId: ID!
 }
 
 input NewCard {
   name: String!
   dueDate: String
+  parentBoardId: ID!
   parentListId: ID!
 }
 

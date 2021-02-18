@@ -27,7 +27,8 @@ func CreateBoard(newBoard *model.NewBoard) (*model.Board, error) {
 		return nil, err
 	}
 	return &model.Board{
-		ID:   res,
-		Name: newBoard.Name,
+		ID:    res,
+		Name:  newBoard.Name,
+		Lists: nil,
 	}, nil
 }

@@ -49,10 +49,17 @@ type ComplexityRoot struct {
 	}
 
 	Card struct {
-		DueDate      func(childComplexity int) int
-		ID           func(childComplexity int) int
-		Name         func(childComplexity int) int
-		ParentListID func(childComplexity int) int
+		DueDate       func(childComplexity int) int
+		ID            func(childComplexity int) int
+		Name          func(childComplexity int) int
+		ParentBoardID func(childComplexity int) int
+		ParentListID  func(childComplexity int) int
+	}
+
+	CardMetaData struct {
+		DueDate func(childComplexity int) int
+		ID      func(childComplexity int) int
+		Name    func(childComplexity int) int
 	}
 
 	List struct {
@@ -143,12 +150,40 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Card.Name(childComplexity), true
 
+	case "Card.parentBoardId":
+		if e.complexity.Card.ParentBoardID == nil {
+			break
+		}
+
+		return e.complexity.Card.ParentBoardID(childComplexity), true
+
 	case "Card.parentListId":
 		if e.complexity.Card.ParentListID == nil {
 			break
 		}
 
 		return e.complexity.Card.ParentListID(childComplexity), true
+
+	case "CardMetaData.dueDate":
+		if e.complexity.CardMetaData.DueDate == nil {
+			break
+		}
+
+		return e.complexity.CardMetaData.DueDate(childComplexity), true
+
+	case "CardMetaData._id":
+		if e.complexity.CardMetaData.ID == nil {
+			break
+		}
+
+		return e.complexity.CardMetaData.ID(childComplexity), true
+
+	case "CardMetaData.name":
+		if e.complexity.CardMetaData.Name == nil {
+			break
+		}
+
+		return e.complexity.CardMetaData.Name(childComplexity), true
 
 	case "List.cards":
 		if e.complexity.List.Cards == nil {
@@ -321,26 +356,34 @@ var sources = []*ast.Source{
 type Board {
   _id: ID!
   name: String!
-  lists: [List]
+  lists: [List!]
 }
 
 type List {
   _id: ID!
   name: String!
   parentBoardId: ID!
-  cards: [Card]
+  cards: [CardMetaData!]
+}
+
+type CardMetaData {
+  _id: ID!
+  name: String!
+  dueDate: String
 }
 
 type Card {
   _id: ID!
   name: String!
   dueDate: String
+  parentBoardId: ID!
   parentListId: ID!
 }
 
 input NewCard {
   name: String!
   dueDate: String
+  parentBoardId: ID!
   parentListId: ID!
 }
 
@@ -614,7 +657,7 @@ func (ec *executionContext) _Board_lists(ctx context.Context, field graphql.Coll
 	}
 	res := resTmp.([]*model.List)
 	fc.Result = res
-	return ec.marshalOList2ᚕᚖgithubᚗcomᚋjx3yangᚋProductivityTrackerᚋsrcᚋbackendᚋgraphᚋmodelᚐList(ctx, field.Selections, res)
+	return ec.marshalOList2ᚕᚖgithubᚗcomᚋjx3yangᚋProductivityTrackerᚋsrcᚋbackendᚋgraphᚋmodelᚐListᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Card__id(ctx context.Context, field graphql.CollectedField, obj *model.Card) (ret graphql.Marshaler) {
@@ -719,6 +762,41 @@ func (ec *executionContext) _Card_dueDate(ctx context.Context, field graphql.Col
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Card_parentBoardId(ctx context.Context, field graphql.CollectedField, obj *model.Card) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Card",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ParentBoardID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNID2string(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Card_parentListId(ctx context.Context, field graphql.CollectedField, obj *model.Card) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -752,6 +830,108 @@ func (ec *executionContext) _Card_parentListId(ctx context.Context, field graphq
 	res := resTmp.(string)
 	fc.Result = res
 	return ec.marshalNID2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _CardMetaData__id(ctx context.Context, field graphql.CollectedField, obj *model.CardMetaData) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "CardMetaData",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNID2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _CardMetaData_name(ctx context.Context, field graphql.CollectedField, obj *model.CardMetaData) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "CardMetaData",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Name, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _CardMetaData_dueDate(ctx context.Context, field graphql.CollectedField, obj *model.CardMetaData) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "CardMetaData",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.DueDate, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _List__id(ctx context.Context, field graphql.CollectedField, obj *model.List) (ret graphql.Marshaler) {
@@ -886,9 +1066,9 @@ func (ec *executionContext) _List_cards(ctx context.Context, field graphql.Colle
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.([]*model.Card)
+	res := resTmp.([]*model.CardMetaData)
 	fc.Result = res
-	return ec.marshalOCard2ᚕᚖgithubᚗcomᚋjx3yangᚋProductivityTrackerᚋsrcᚋbackendᚋgraphᚋmodelᚐCard(ctx, field.Selections, res)
+	return ec.marshalOCardMetaData2ᚕᚖgithubᚗcomᚋjx3yangᚋProductivityTrackerᚋsrcᚋbackendᚋgraphᚋmodelᚐCardMetaDataᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_createCard(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -2334,6 +2514,14 @@ func (ec *executionContext) unmarshalInputNewCard(ctx context.Context, obj inter
 			if err != nil {
 				return it, err
 			}
+		case "parentBoardId":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("parentBoardId"))
+			it.ParentBoardID, err = ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
 		case "parentListId":
 			var err error
 
@@ -2441,11 +2629,50 @@ func (ec *executionContext) _Card(ctx context.Context, sel ast.SelectionSet, obj
 			}
 		case "dueDate":
 			out.Values[i] = ec._Card_dueDate(ctx, field, obj)
+		case "parentBoardId":
+			out.Values[i] = ec._Card_parentBoardId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "parentListId":
 			out.Values[i] = ec._Card_parentListId(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var cardMetaDataImplementors = []string{"CardMetaData"}
+
+func (ec *executionContext) _CardMetaData(ctx context.Context, sel ast.SelectionSet, obj *model.CardMetaData) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, cardMetaDataImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("CardMetaData")
+		case "_id":
+			out.Values[i] = ec._CardMetaData__id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "name":
+			out.Values[i] = ec._CardMetaData_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "dueDate":
+			out.Values[i] = ec._CardMetaData_dueDate(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -2888,6 +3115,16 @@ func (ec *executionContext) marshalNCard2ᚖgithubᚗcomᚋjx3yangᚋProductivit
 	return ec._Card(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalNCardMetaData2ᚖgithubᚗcomᚋjx3yangᚋProductivityTrackerᚋsrcᚋbackendᚋgraphᚋmodelᚐCardMetaData(ctx context.Context, sel ast.SelectionSet, v *model.CardMetaData) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._CardMetaData(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNID2string(ctx context.Context, v interface{}) (string, error) {
 	res, err := graphql.UnmarshalID(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -3207,7 +3444,14 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 	return graphql.MarshalBoolean(*v)
 }
 
-func (ec *executionContext) marshalOCard2ᚕᚖgithubᚗcomᚋjx3yangᚋProductivityTrackerᚋsrcᚋbackendᚋgraphᚋmodelᚐCard(ctx context.Context, sel ast.SelectionSet, v []*model.Card) graphql.Marshaler {
+func (ec *executionContext) marshalOCard2ᚖgithubᚗcomᚋjx3yangᚋProductivityTrackerᚋsrcᚋbackendᚋgraphᚋmodelᚐCard(ctx context.Context, sel ast.SelectionSet, v *model.Card) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._Card(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOCardMetaData2ᚕᚖgithubᚗcomᚋjx3yangᚋProductivityTrackerᚋsrcᚋbackendᚋgraphᚋmodelᚐCardMetaDataᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.CardMetaData) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -3234,7 +3478,7 @@ func (ec *executionContext) marshalOCard2ᚕᚖgithubᚗcomᚋjx3yangᚋProducti
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOCard2ᚖgithubᚗcomᚋjx3yangᚋProductivityTrackerᚋsrcᚋbackendᚋgraphᚋmodelᚐCard(ctx, sel, v[i])
+			ret[i] = ec.marshalNCardMetaData2ᚖgithubᚗcomᚋjx3yangᚋProductivityTrackerᚋsrcᚋbackendᚋgraphᚋmodelᚐCardMetaData(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -3247,14 +3491,7 @@ func (ec *executionContext) marshalOCard2ᚕᚖgithubᚗcomᚋjx3yangᚋProducti
 	return ret
 }
 
-func (ec *executionContext) marshalOCard2ᚖgithubᚗcomᚋjx3yangᚋProductivityTrackerᚋsrcᚋbackendᚋgraphᚋmodelᚐCard(ctx context.Context, sel ast.SelectionSet, v *model.Card) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._Card(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalOList2ᚕᚖgithubᚗcomᚋjx3yangᚋProductivityTrackerᚋsrcᚋbackendᚋgraphᚋmodelᚐList(ctx context.Context, sel ast.SelectionSet, v []*model.List) graphql.Marshaler {
+func (ec *executionContext) marshalOList2ᚕᚖgithubᚗcomᚋjx3yangᚋProductivityTrackerᚋsrcᚋbackendᚋgraphᚋmodelᚐListᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.List) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -3281,7 +3518,7 @@ func (ec *executionContext) marshalOList2ᚕᚖgithubᚗcomᚋjx3yangᚋProducti
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOList2ᚖgithubᚗcomᚋjx3yangᚋProductivityTrackerᚋsrcᚋbackendᚋgraphᚋmodelᚐList(ctx, sel, v[i])
+			ret[i] = ec.marshalNList2ᚖgithubᚗcomᚋjx3yangᚋProductivityTrackerᚋsrcᚋbackendᚋgraphᚋmodelᚐList(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)

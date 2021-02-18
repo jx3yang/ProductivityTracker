@@ -105,6 +105,7 @@ github.com/json-iterator/go v1.1.9/go.mod h1:KdQUCv79m/52Kvf8AW2vK1V8akMuk1QjK/u
 github.com/json-iterator/go v1.1.10 h1:Kz6Cvnvv2wGdaG/V8yMvfkmNiXq9Ya2KUv4rouJJr68=
 github.com/json-iterator/go v1.1.10/go.mod h1:KdQUCv79m/52Kvf8AW2vK1V8akMuk1QjK/uOdHXbAo4=
 github.com/jx3yang/ProductivityTracker v0.0.0-20210218035858-c8affbd0bf15 h1:TBMKyy5TLhfemt5vB7wSkiiYTildvjdbgXa5yyVfLEo=
+github.com/jx3yang/ProductivityTracker v0.0.0-20210218050325-f3924e9b3f99 h1:W/gR3HUtWqJezlV9iz5Pl+uGv8TSTh+PQ+UBiEpRkqE=
 github.com/karrick/godirwalk v1.8.0/go.mod h1:H5KPZjojv4lE+QYImBI8xVtrBRgYrIVsaRPx4tDPEn4=
 github.com/karrick/godirwalk v1.10.3/go.mod h1:RoGL9dQei4vP9ilrpETWE8CLOZ1kiN0LhBygSwrAsHA=
 github.com/klauspost/compress v1.9.5 h1:U+CaK85mrNNb4k8BNOfgJtJ/gr6kswUCFj6miSzVC6M=
