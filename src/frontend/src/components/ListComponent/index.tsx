@@ -14,12 +14,6 @@ export const ListComponent: React.FC<ListComponentProps> = (props) => {
   const { list, index } = props;
   const { listID, cards, name } = list;
 
-  const wrapperStyle: React.CSSProperties = {
-    padding: '8px',
-    flexGrow: 1,
-    minHeight: '100px',
-  }
-
   return (
     <Draggable draggableId={listID} index={index} key={listID}>
       {provided => (
@@ -29,11 +23,9 @@ export const ListComponent: React.FC<ListComponentProps> = (props) => {
           </div>
           <Droppable droppableId={listID} type={CARD} key={listID}>
             {provided => (
-                <div ref={provided.innerRef} {...provided.droppableProps}>
-                  <div style={wrapperStyle}>
-                    {cards.map((card, index) => (<CardComponent card={card} index={index} key={card.cardID} />))}
-                    {provided.placeholder}
-                  </div>
+                <div ref={provided.innerRef} {...provided.droppableProps} className='wrapper'>
+                  {cards.map((card, index) => (<CardComponent card={card} index={index} key={card.cardID} />))}
+                  {provided.placeholder}
                 </div>
               )
             }
