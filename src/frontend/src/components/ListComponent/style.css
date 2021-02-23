@@ -1,0 +1,9 @@
+.list {
+  margin: 8px;
+  border-radius: 2px;
+  border: 1px solid lightgrey;
+  background-color: white;
+  width: 220px;
+  display: flex;
+  flex-direction: column;
+}

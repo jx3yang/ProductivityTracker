@@ -15,8 +15,12 @@ export const BoardView: React.FC<BoardViewProps> = (props) => {
       {
         cards: [
           {
-            cardID: '1',
-            name: '1',
+            cardID: '11',
+            name: '11',
+          },
+          {
+            cardID: '12',
+            name: '12',
           }
         ],
         listID: '1',
