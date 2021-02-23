@@ -1,4 +1,4 @@
-import React from 'react'
+import React from 'react';
 import { Draggable, Droppable } from 'react-beautiful-dnd';
 import List from 'src/models/list';
 
@@ -22,7 +22,7 @@ export const ListComponent: React.FC<ListComponentProps> = (props) => {
   }
 
   return (
-    <Draggable draggableId={listID} index={index}>
+    <Draggable draggableId={listID} index={index} key={listID}>
       {provided => (
         <div ref={provided.innerRef} {...provided.draggableProps}>
           <div style={listStyle}>
