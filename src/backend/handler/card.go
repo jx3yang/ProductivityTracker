@@ -26,7 +26,7 @@ func FindCardByID(ID string) (*model.Card, error) {
 	return &card, nil
 }
 
-func FindAllFromList(listID string) ([]*model.Card, error) {
+func FindAllCardsFromList(listID string) ([]*model.Card, error) {
 	cursor, err := cardCollection.FindAll(bson.M{constants.ParentListIDField: listID})
 	if err != nil {
 		return nil, err

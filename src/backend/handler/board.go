@@ -16,9 +16,34 @@ func FindBoardByID(ID string) (*model.Board, error) {
 	if err != nil {
 		return nil, err
 	}
-	board := model.Board{}
+
+	board := Board{}
 	res.Decode(&board)
-	return &board, nil
+	lists, err := FindAllListsFromBoard(ID)
+	if err != nil {
+		return nil, err
+	}
+
+	idToListsMap := make(map[string]*model.List, len(lists))
+	for idx := range lists {
+		list := lists[idx]
+		idToListsMap[list.ID] = list
+	}
+
+	var orderedLists []*model.List
+	for _, id := range board.ListOrder {
+		list, ok := idToListsMap[id]
+		if !ok {
+			panic("Could not find id " + id + " in the fetched lists")
+		}
+		orderedLists = append(orderedLists, list)
+	}
+
+	return &model.Board{
+		ID:    board.ID.Hex(),
+		Name:  board.Name,
+		Lists: orderedLists,
+	}, nil
 }
 
 func CreateBoard(newBoard *model.NewBoard) (*model.Board, error) {

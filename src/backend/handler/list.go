@@ -16,6 +16,28 @@ func initListCollection(d *db.MongoDatabase) {
 	listCollection = d.InitCollection(listCollectionName)
 }
 
+func FindAllListsFromBoard(boardID string) ([]*model.List, error) {
+	cursor, err := listCollection.FindAll(bson.M{constants.ParentBoardIDField: boardID})
+	if err != nil {
+		return nil, err
+	}
+	var dbLists []*List
+	if err = cursor.All(context.TODO(), &dbLists); err != nil {
+		return nil, err
+	}
+
+	var lists []*model.List
+	for _, dbList := range dbLists {
+		list, err := FindListByID(dbList.ID.Hex())
+		if err != nil {
+			return nil, err
+		}
+		lists = append(lists, list)
+	}
+
+	return lists, nil
+}
+
 func FindListByID(ID string) (*model.List, error) {
 	res, err := listCollection.FindByID(ID)
 	if err != nil {
@@ -23,7 +45,7 @@ func FindListByID(ID string) (*model.List, error) {
 	}
 	list := List{}
 	res.Decode(&list)
-	cards, err := FindAllFromList(ID)
+	cards, err := FindAllCardsFromList(ID)
 	if err != nil {
 		return nil, err
 	}
