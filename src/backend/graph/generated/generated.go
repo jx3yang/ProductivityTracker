@@ -8,6 +8,7 @@ import (
 	"errors"
 	"strconv"
 	"sync"
+	"sync/atomic"
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/introspection"
@@ -349,21 +350,22 @@ func (ec *executionContext) introspectType(name string) (*introspection.Type, er
 }
 
 var sources = []*ast.Source{
-	{Name: "graph/schema.graphqls", Input: `# GraphQL schema example
-#
-# https://gqlgen.com/getting-started/
-
-type Board {
+	{Name: "graph/board.schema.graphqls", Input: `type Board {
   _id: ID!
   name: String!
   lists: [List!]
 }
 
-type List {
+input NewBoard {
+  name: String!
+}
+`, BuiltIn: false},
+	{Name: "graph/card.schema.graphqls", Input: `type Card {
   _id: ID!
   name: String!
+  dueDate: String
   parentBoardId: ID!
-  cards: [CardMetaData!]
+  parentListId: ID!
 }
 
 type CardMetaData {
@@ -372,40 +374,35 @@ type CardMetaData {
   dueDate: String
 }
 
-type Card {
-  _id: ID!
-  name: String!
-  dueDate: String
-  parentBoardId: ID!
-  parentListId: ID!
-}
-
 input NewCard {
   name: String!
   dueDate: String
   parentBoardId: ID!
   parentListId: ID!
 }
+`, BuiltIn: false},
+	{Name: "graph/list.schema.graphqls", Input: `type List {
+  _id: ID!
+  name: String!
+  parentBoardId: ID!
+  cards: [CardMetaData!]
+}
 
 input NewList {
   name: String!
   parentBoardId: ID!
 }
-
-input NewBoard {
-  name: String!
-}
-
-type Mutation {
+`, BuiltIn: false},
+	{Name: "graph/mutation.schema.graphqls", Input: `type Mutation {
   createCard(card: NewCard!): Card!
   createList(list: NewList!): List!
   createBoard(board: NewBoard!): Board!
 }
-
-type Query {
-  getCard(id: ID!): Card
-  getList(id: ID!): List
-  getBoard(id: ID!): Board
+`, BuiltIn: false},
+	{Name: "graph/query.schema.graphqls", Input: `type Query {
+  getCard(id: ID!): Card!
+  getList(id: ID!): List!
+  getBoard(id: ID!): Board!
 }
 `, BuiltIn: false},
 }
@@ -1229,11 +1226,14 @@ func (ec *executionContext) _Query_getCard(ctx context.Context, field graphql.Co
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
 	res := resTmp.(*model.Card)
 	fc.Result = res
-	return ec.marshalOCard2ᚖgithubᚗcomᚋjx3yangᚋProductivityTrackerᚋsrcᚋbackendᚋgraphᚋmodelᚐCard(ctx, field.Selections, res)
+	return ec.marshalNCard2ᚖgithubᚗcomᚋjx3yangᚋProductivityTrackerᚋsrcᚋbackendᚋgraphᚋmodelᚐCard(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_getList(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -1268,11 +1268,14 @@ func (ec *executionContext) _Query_getList(ctx context.Context, field graphql.Co
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
 	res := resTmp.(*model.List)
 	fc.Result = res
-	return ec.marshalOList2ᚖgithubᚗcomᚋjx3yangᚋProductivityTrackerᚋsrcᚋbackendᚋgraphᚋmodelᚐList(ctx, field.Selections, res)
+	return ec.marshalNList2ᚖgithubᚗcomᚋjx3yangᚋProductivityTrackerᚋsrcᚋbackendᚋgraphᚋmodelᚐList(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_getBoard(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -1307,11 +1310,14 @@ func (ec *executionContext) _Query_getBoard(ctx context.Context, field graphql.C
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
 	res := resTmp.(*model.Board)
 	fc.Result = res
-	return ec.marshalOBoard2ᚖgithubᚗcomᚋjx3yangᚋProductivityTrackerᚋsrcᚋbackendᚋgraphᚋmodelᚐBoard(ctx, field.Selections, res)
+	return ec.marshalNBoard2ᚖgithubᚗcomᚋjx3yangᚋProductivityTrackerᚋsrcᚋbackendᚋgraphᚋmodelᚐBoard(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query___type(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -2788,6 +2794,9 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_getCard(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
 				return res
 			})
 		case "getList":
@@ -2799,6 +2808,9 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_getList(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
 				return res
 			})
 		case "getBoard":
@@ -2810,6 +2822,9 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_getBoard(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
 				return res
 			})
 		case "__type":
@@ -3413,13 +3428,6 @@ func (ec *executionContext) marshalN__TypeKind2string(ctx context.Context, sel a
 	return res
 }
 
-func (ec *executionContext) marshalOBoard2ᚖgithubᚗcomᚋjx3yangᚋProductivityTrackerᚋsrcᚋbackendᚋgraphᚋmodelᚐBoard(ctx context.Context, sel ast.SelectionSet, v *model.Board) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._Board(ctx, sel, v)
-}
-
 func (ec *executionContext) unmarshalOBoolean2bool(ctx context.Context, v interface{}) (bool, error) {
 	res, err := graphql.UnmarshalBoolean(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -3442,13 +3450,6 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 		return graphql.Null
 	}
 	return graphql.MarshalBoolean(*v)
-}
-
-func (ec *executionContext) marshalOCard2ᚖgithubᚗcomᚋjx3yangᚋProductivityTrackerᚋsrcᚋbackendᚋgraphᚋmodelᚐCard(ctx context.Context, sel ast.SelectionSet, v *model.Card) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._Card(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalOCardMetaData2ᚕᚖgithubᚗcomᚋjx3yangᚋProductivityTrackerᚋsrcᚋbackendᚋgraphᚋmodelᚐCardMetaDataᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.CardMetaData) graphql.Marshaler {
@@ -3529,13 +3530,6 @@ func (ec *executionContext) marshalOList2ᚕᚖgithubᚗcomᚋjx3yangᚋProducti
 	}
 	wg.Wait()
 	return ret
-}
-
-func (ec *executionContext) marshalOList2ᚖgithubᚗcomᚋjx3yangᚋProductivityTrackerᚋsrcᚋbackendᚋgraphᚋmodelᚐList(ctx context.Context, sel ast.SelectionSet, v *model.List) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._List(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOString2string(ctx context.Context, v interface{}) (string, error) {

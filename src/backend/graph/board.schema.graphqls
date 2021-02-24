@@ -1,0 +1,9 @@
+type Board {
+  _id: ID!
+  name: String!
+  lists: [List!]
+}
+
+input NewBoard {
+  name: String!
+}

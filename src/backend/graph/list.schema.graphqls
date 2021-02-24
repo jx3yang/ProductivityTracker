@@ -1,0 +1,11 @@
+type List {
+  _id: ID!
+  name: String!
+  parentBoardId: ID!
+  cards: [CardMetaData!]
+}
+
+input NewList {
+  name: String!
+  parentBoardId: ID!
+}

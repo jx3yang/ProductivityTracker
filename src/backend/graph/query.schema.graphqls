@@ -1,0 +1,5 @@
+type Query {
+  getCard(id: ID!): Card!
+  getList(id: ID!): List!
+  getBoard(id: ID!): Board!
+}

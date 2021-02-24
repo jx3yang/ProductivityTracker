@@ -1,0 +1,5 @@
+type Mutation {
+  createCard(card: NewCard!): Card!
+  createList(list: NewList!): List!
+  createBoard(board: NewBoard!): Board!
+}

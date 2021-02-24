@@ -1,0 +1,20 @@
+type Card {
+  _id: ID!
+  name: String!
+  dueDate: String
+  parentBoardId: ID!
+  parentListId: ID!
+}
+
+type CardMetaData {
+  _id: ID!
+  name: String!
+  dueDate: String
+}
+
+input NewCard {
+  name: String!
+  dueDate: String
+  parentBoardId: ID!
+  parentListId: ID!
+}
