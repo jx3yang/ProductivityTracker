@@ -4,6 +4,8 @@ import Board from 'src/models/board';
 import List from 'src/models/list';
 import { ListComponent } from 'src/components/ListComponent';
 import { CARD, LIST } from 'src/components/utils/constants';
+import { GET_BOARD } from 'src/graphql/board';
+import { useQuery } from '@apollo/client';
 
 function moveElement<T>(oldList: Array<T>, sourceIdx: number, destIdx: number): Array<T> {
   const newList = [...oldList];
@@ -17,6 +19,9 @@ interface BoardComponentProps {
 }
 
 export const BoardComponent: React.FC<BoardComponentProps> = (props) => {
+  const { loading, data } = useQuery<Board>(GET_BOARD, { variables: { id: "602ee9c00f16fe8c02efcb94" }});
+  console.log(data);
+
   const { board } = props;
   const [lists, setLists] = useState<List[]>([]);
   const [boardID, setBoardID] = useState<string>('');

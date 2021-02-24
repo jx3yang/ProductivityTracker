@@ -9,6 +9,7 @@ import (
 
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
+	"github.com/gin-contrib/cors"
 	"github.com/jx3yang/ProductivityTracker/src/backend/config"
 	"github.com/jx3yang/ProductivityTracker/src/backend/constants"
 	db "github.com/jx3yang/ProductivityTracker/src/backend/database"
@@ -45,6 +46,15 @@ func playgroundHandler() gin.HandlerFunc {
 	return makeGinHandler(serv)
 }
 
+func getCorsConfig() gin.HandlerFunc {
+	config := cors.DefaultConfig()
+	config.AllowOrigins = []string{"http://localhost:3000"}
+	config.AllowMethods = []string{"POST"}
+	config.ExposeHeaders = []string{"Content-Length"}
+	config.AllowCredentials = true
+	return cors.New(config)
+}
+
 func Run() {
 	var configFile *string = new(string)
 	if os.Getenv("ENV") == config.Prod {
@@ -63,6 +73,7 @@ func Run() {
 	handleErr(err)
 
 	r := gin.Default()
+	r.Use(getCorsConfig())
 	r.GET("/", playgroundHandler())
 	r.POST("/query", graphqlHandler())
 	r.Run(":" + configuration.Port)
