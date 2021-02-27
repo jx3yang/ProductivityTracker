@@ -1,4 +1,4 @@
 export default interface Card {
-  cardID: string;
+  _id: string;
   name: string;
 }

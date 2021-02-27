@@ -3,6 +3,7 @@ import { gql } from "@apollo/client";
 const GET_BOARD = gql`
   query getBoard($id: ID!) {
     getBoard(id: $id) {
+      _id
       name
       lists {
         _id

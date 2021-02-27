@@ -1,7 +1,7 @@
 import Card from "./card";
 
 export default interface List {
-  listID: string;
+  _id: string;
   name: string
-  cards: Card[];
+  cards?: Card[];
 }

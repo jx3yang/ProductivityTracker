@@ -1,7 +1,7 @@
 import List from "./list";
 
 export default interface Board {
-  boardID: string;
+  _id: string;
   name: string;
-  lists: List[];
+  lists?: List[];
 }
