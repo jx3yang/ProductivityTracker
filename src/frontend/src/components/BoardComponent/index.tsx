@@ -9,6 +9,7 @@ import { moveElement, addOneToList, removeOneFromList } from 'src/components/uti
 
 import { ChangeListOrder, UPDATE_LIST_ORDER } from 'src/graphql/list';
 import { ApolloQueryResult, useMutation } from '@apollo/client';
+import { ChangeCardOrder, UPDATE_CARD_ORDER } from 'src/graphql/card';
 
 interface BoardComponentProps {
   board: Board;
@@ -18,14 +19,15 @@ interface BoardComponentProps {
 export const BoardComponent: React.FC<BoardComponentProps> = (props) => {
   const { board, refetch } = props;
   const [lists, setLists] = useState<List[]>([]);
-  const [boardID, setBoardID] = useState<string>('');
+  const [boardId, setBoardId] = useState<string>('');
   const [name, setBoardName] = useState<string>('');
 
   const [updateListOrder] = useMutation(UPDATE_LIST_ORDER);
+  const [updateCardOrder] = useMutation(UPDATE_CARD_ORDER);
 
   useEffect(() => {
     setLists(board.lists || []);
-    setBoardID(board._id);
+    setBoardId(board._id);
     setBoardName(board.name);
   }, [board]);
 
@@ -38,14 +40,14 @@ export const BoardComponent: React.FC<BoardComponentProps> = (props) => {
     
     // moving lists around
     if (type === LIST) {
-      const changeListOrder: ChangeListOrder = {
-        listID: draggableId,
-        boardID,
-        srcIdx: source.index,
-        destIdx: destination.index,
-      }
       setLists(moveElement(currLists, source.index, destination.index));
 
+      const changeListOrder: ChangeListOrder = {
+        listId: draggableId,
+        boardId,
+        srcIdx: source.index,
+        destIdx: destination.index,
+      };
       // if update fails, revert to original order
       // TODO: have a graphql subscription to keep board updated
       // TODO: do not revert to original order if user is offline,
@@ -91,13 +93,41 @@ export const BoardComponent: React.FC<BoardComponentProps> = (props) => {
 
         setLists(currLists);
       }
+
+      const changeCardOrder: ChangeCardOrder = {
+        boardId,
+        srcListId: source.droppableId,
+        destListId: destination.droppableId,
+        srcIdx: source.index,
+        destIdx: destination.index,
+        cardId: draggableId,
+      };
+
+      // if update fails, revert to original order
+      // TODO: have a graphql subscription to keep board updated
+      // TODO: do not revert to original order if user is offline,
+      //       instead tell the user they are offline and that changes will not be saved
+      updateCardOrder({ variables: { changeCardOrder } })
+        .then(res => {
+          if (!res.data?.updateCardOrder) {
+            setLists(oldLists);
+            refetch();
+          }
+        })
+        .catch(r => {
+          console.log(r);
+          setLists(oldLists);
+          refetch();
+        });
+      
+      return;
     }
   }
 
   return (
     <DragDropContext onDragEnd={onDragEnd}>
       <div>Title: {name}</div>
-      {boardID && <Droppable droppableId={boardID} direction='horizontal' type={LIST}>
+      {boardId && <Droppable droppableId={boardId} direction='horizontal' type={LIST}>
         {provided => (
           <div ref={provided.innerRef} {...provided.droppableProps} style={{ display: 'flex' }}>
             {lists.map((list, index) => <ListComponent list={list} index={index} key={list._id} />)}

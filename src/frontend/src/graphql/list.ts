@@ -1,8 +1,8 @@
 import { gql } from "@apollo/client";
 
 export interface ChangeListOrder {
-  listID: string
-  boardID: string
+  listId: string
+  boardId: string
   srcIdx: number
   destIdx: number
 }

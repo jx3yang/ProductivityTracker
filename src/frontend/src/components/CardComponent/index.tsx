@@ -10,10 +10,10 @@ interface CardComponentProps {
 
 export const CardComponent: React.FC<CardComponentProps> = (props) => {
   const { card, index } = props;
-  const { _id: cardID, name } = card;
+  const { _id: cardId, name } = card;
 
   return (
-    <Draggable draggableId={cardID} index={index} key={cardID}>
+    <Draggable draggableId={cardId} index={index} key={cardId}>
       {provided => (
         <div
           ref={provided.innerRef}
@@ -21,7 +21,7 @@ export const CardComponent: React.FC<CardComponentProps> = (props) => {
           {...provided.dragHandleProps}
           className="card"
         >
-          card: {name}
+          card: {cardId}
         </div>
       )}
     </Draggable>
