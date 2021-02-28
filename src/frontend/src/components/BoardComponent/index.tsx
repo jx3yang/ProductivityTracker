@@ -7,9 +7,11 @@ import { CARD, LIST } from 'src/components/utils/constants';
 import Card from 'src/models/card';
 import { moveElement, addOneToList, removeOneFromList } from 'src/components/utils/utils';
 
-import { ChangeListOrder, UPDATE_LIST_ORDER } from 'src/graphql/list';
+import { ChangeListOrder, CREATE_LIST, NewList, UPDATE_LIST_ORDER } from 'src/graphql/list';
 import { ApolloQueryResult, useMutation } from '@apollo/client';
 import { ChangeCardOrder, UPDATE_CARD_ORDER } from 'src/graphql/card';
+import { AddList } from '../AddList';
+import { Grid } from '@material-ui/core';
 
 interface BoardComponentProps {
   board: Board;
@@ -24,6 +26,8 @@ export const BoardComponent: React.FC<BoardComponentProps> = (props) => {
 
   const [updateListOrder] = useMutation(UPDATE_LIST_ORDER);
   const [updateCardOrder] = useMutation(UPDATE_CARD_ORDER);
+
+  const [createList] = useMutation(CREATE_LIST);
 
   useEffect(() => {
     setLists(board.lists || []);
@@ -114,8 +118,7 @@ export const BoardComponent: React.FC<BoardComponentProps> = (props) => {
             refetch();
           }
         })
-        .catch(r => {
-          console.log(r);
+        .catch(_ => {
           setLists(oldLists);
           refetch();
         });
@@ -124,17 +127,47 @@ export const BoardComponent: React.FC<BoardComponentProps> = (props) => {
     }
   }
 
+  const addList = (name: string) => {
+    if (name !== '') {
+      const list: NewList = {
+        name,
+        parentBoardId: boardId,
+      };
+
+      createList({ variables: { list }})
+        .then(res => {
+          if (res.data?.createList?._id) {
+            const { _id } = res.data?.createList;
+            setLists([...lists, { name, _id, cards: [] }]);
+          }
+          else refetch();
+        })
+        .catch(_ => refetch());
+    }
+  }
+
   return (
     <DragDropContext onDragEnd={onDragEnd}>
       <div>Title: {name}</div>
-      {boardId && <Droppable droppableId={boardId} direction='horizontal' type={LIST}>
-        {provided => (
-          <div ref={provided.innerRef} {...provided.droppableProps} style={{ display: 'flex' }}>
-            {lists.map((list, index) => <ListComponent list={list} index={index} key={list._id} />)}
-            {provided.placeholder}
-          </div>
-        )}
-      </Droppable>}
+      <div style={{ overflowX: 'scroll', height: '100%' }}>
+        <Grid container style={{ flexWrap: 'nowrap' }}>
+            {boardId && <Droppable droppableId={boardId} direction='horizontal' type={LIST}>
+              {provided => (
+                  <div ref={provided.innerRef} {...provided.droppableProps} style={{ display: 'flex' }}>
+                    {lists.map((list, index) => 
+                      <Grid item xs key={list._id}>
+                        <ListComponent list={list} index={index} key={list._id} />
+                      </Grid>
+                    )}
+                    {provided.placeholder}
+                  </div>
+              )}
+            </Droppable>}
+          <Grid item xs>
+            <AddList onAdd={addList}/>
+          </Grid>
+        </Grid>
+      </div>
     </DragDropContext>
   );
 }

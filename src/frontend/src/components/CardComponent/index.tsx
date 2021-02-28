@@ -21,7 +21,7 @@ export const CardComponent: React.FC<CardComponentProps> = (props) => {
           {...provided.dragHandleProps}
           className="card"
         >
-          card: {cardId}
+          card: {name}
         </div>
       )}
     </Draggable>

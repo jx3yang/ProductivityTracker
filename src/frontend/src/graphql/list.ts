@@ -7,12 +7,26 @@ export interface ChangeListOrder {
   destIdx: number
 }
 
+export interface NewList {
+  name: string
+  parentBoardId: string
+}
+
 const UPDATE_LIST_ORDER = gql`
   mutation updateListOrder($changeListOrder: ChangeListOrder!) {
     updateListOrder(changeListOrder: $changeListOrder)
   }
 `
 
+const CREATE_LIST = gql`
+  mutation createList($list: NewList!) {
+    createList(list: $list) {
+      _id
+    }
+  }
+`
+
 export {
-  UPDATE_LIST_ORDER
+  UPDATE_LIST_ORDER,
+  CREATE_LIST,
 }

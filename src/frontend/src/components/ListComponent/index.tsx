@@ -20,7 +20,7 @@ export const ListComponent: React.FC<ListComponentProps> = (props) => {
         {provided => (
           <div ref={provided.innerRef} {...provided.draggableProps} className='list'>
             <div {...provided.dragHandleProps}>
-              title: {listId}
+              title: {name}
             </div>
             <Droppable droppableId={listId} type={CARD} key={listId}>
               {provided => (
