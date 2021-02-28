@@ -162,19 +162,17 @@ func updateCardOrderDifferentLists(changeCardOrder *model.ChangeCardOrder) (bool
 	destListCardOrder := destList.CardOrder
 
 	if srcIdx >= len(srcListCardOrder) || srcListCardOrder[srcIdx] != cardID {
+		fmt.Println(srcListCardOrder)
 		return false, errors.New("The list state is modified")
 	}
 
 	destIdx := changeCardOrder.DestIdx
-	if len(destListCardOrder) <= destIdx {
-		destIdx = len(destListCardOrder) - 1
+	if len(destListCardOrder) < destIdx {
+		destIdx = len(destListCardOrder)
 	}
 
 	newSrcOrder := removeOneFromList(srcListCardOrder, srcIdx)
 	newDestOrder := addOneToList(destListCardOrder, destIdx, cardID)
-
-	fmt.Println(newSrcOrder)
-	fmt.Println(newDestOrder)
 
 	idsToUpdate := make(map[string]interface{}, 2)
 	idsToUpdate[srcListID] = bson.M{"$set": bson.M{constants.CardOrderField: newSrcOrder}}

@@ -23,7 +23,7 @@ type CardMetaData struct {
 }
 
 type ChangeCardOrder struct {
-	BoardID    string `json:"boardID" bson:"boardID"`
+	BoardID    string `json:"boardId" bson:"boardId"`
 	SrcListID  string `json:"srcListId" bson:"srcListId"`
 	DestListID string `json:"destListId" bson:"destListId"`
 	CardID     string `json:"cardId" bson:"cardId"`
@@ -32,8 +32,8 @@ type ChangeCardOrder struct {
 }
 
 type ChangeListOrder struct {
-	BoardID string `json:"boardID" bson:"boardID"`
-	ListID  string `json:"listID" bson:"listID"`
+	BoardID string `json:"boardId" bson:"boardId"`
+	ListID  string `json:"listId" bson:"listId"`
 	SrcIdx  int    `json:"srcIdx" bson:"srcIdx"`
 	DestIdx int    `json:"destIdx" bson:"destIdx"`
 }

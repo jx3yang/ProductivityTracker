@@ -410,7 +410,7 @@ input NewCard {
 }
 
 input ChangeCardOrder {
-  boardID: ID!
+  boardId: ID!
   srcListId: ID!
   destListId: ID!
   cardId: ID!
@@ -431,8 +431,8 @@ input NewList {
 }
 
 input ChangeListOrder {
-  boardID: ID!
-  listID: ID!
+  boardId: ID!
+  listId: ID!
   srcIdx: Int!
   destIdx: Int!
 }
@@ -2645,10 +2645,10 @@ func (ec *executionContext) unmarshalInputChangeCardOrder(ctx context.Context, o
 
 	for k, v := range asMap {
 		switch k {
-		case "boardID":
+		case "boardId":
 			var err error
 
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("boardID"))
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("boardId"))
 			it.BoardID, err = ec.unmarshalNID2string(ctx, v)
 			if err != nil {
 				return it, err
@@ -2705,18 +2705,18 @@ func (ec *executionContext) unmarshalInputChangeListOrder(ctx context.Context, o
 
 	for k, v := range asMap {
 		switch k {
-		case "boardID":
+		case "boardId":
 			var err error
 
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("boardID"))
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("boardId"))
 			it.BoardID, err = ec.unmarshalNID2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
-		case "listID":
+		case "listId":
 			var err error
 
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("listID"))
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("listId"))
 			it.ListID, err = ec.unmarshalNID2string(ctx, v)
 			if err != nil {
 				return it, err

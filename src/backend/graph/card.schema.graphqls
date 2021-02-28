@@ -20,7 +20,7 @@ input NewCard {
 }
 
 input ChangeCardOrder {
-  boardID: ID!
+  boardId: ID!
   srcListId: ID!
   destListId: ID!
   cardId: ID!

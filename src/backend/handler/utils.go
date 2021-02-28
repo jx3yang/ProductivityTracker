@@ -48,5 +48,9 @@ func addOneToList(list []string, idx int, elem string) []string {
 		newList = append(newList, element)
 	}
 
+	if idx == len(list) {
+		newList = append(newList, elem)
+	}
+
 	return newList
 }

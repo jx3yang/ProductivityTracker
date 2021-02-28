@@ -11,8 +11,8 @@ input NewList {
 }
 
 input ChangeListOrder {
-  boardID: ID!
-  listID: ID!
+  boardId: ID!
+  listId: ID!
   srcIdx: Int!
   destIdx: Int!
 }
