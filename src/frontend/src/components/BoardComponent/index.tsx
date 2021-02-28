@@ -149,7 +149,7 @@ export const BoardComponent: React.FC<BoardComponentProps> = (props) => {
   return (
     <DragDropContext onDragEnd={onDragEnd}>
       <div>Title: {name}</div>
-      <div style={{ overflowX: 'scroll', height: '100%' }}>
+      <div style={{ overflowX: 'scroll', height: '95%' }}>
         <Grid container style={{ flexWrap: 'nowrap' }}>
             {boardId && <Droppable droppableId={boardId} direction='horizontal' type={LIST}>
               {provided => (
