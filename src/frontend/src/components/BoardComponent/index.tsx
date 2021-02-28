@@ -7,15 +7,21 @@ import { CARD, LIST } from 'src/components/utils/constants';
 import Card from 'src/models/card';
 import { moveElement, addOneToList, removeOneFromList } from 'src/components/utils/utils';
 
+import { ChangeListOrder, UPDATE_LIST_ORDER } from 'src/graphql/list';
+import { ApolloQueryResult, useMutation } from '@apollo/client';
+
 interface BoardComponentProps {
   board: Board;
+  refetch: (variables?: Partial<Record<string, any>> | undefined) => Promise<ApolloQueryResult<Record<string, Board>>>
 }
 
 export const BoardComponent: React.FC<BoardComponentProps> = (props) => {
-  const { board } = props;
+  const { board, refetch } = props;
   const [lists, setLists] = useState<List[]>([]);
   const [boardID, setBoardID] = useState<string>('');
   const [name, setBoardName] = useState<string>('');
+
+  const [updateListOrder] = useMutation(UPDATE_LIST_ORDER);
 
   useEffect(() => {
     setLists(board.lists || []);
@@ -27,12 +33,35 @@ export const BoardComponent: React.FC<BoardComponentProps> = (props) => {
     const { destination, source, draggableId, type } = result;
     if (!destination) return;
     if (destination.droppableId === source.droppableId && destination.index === source.index) return;
-
+    const oldLists = [...lists];
     const currLists = [...lists];
     
     // moving lists around
     if (type === LIST) {
+      const changeListOrder: ChangeListOrder = {
+        listID: draggableId,
+        boardID,
+        srcIdx: source.index,
+        destIdx: destination.index,
+      }
       setLists(moveElement(currLists, source.index, destination.index));
+
+      // if update fails, revert to original order
+      // TODO: have a graphql subscription to keep board updated
+      // TODO: do not revert to original order if user is offline,
+      //       instead tell the user they are offline and that changes will not be saved
+      updateListOrder({ variables: { changeListOrder } })
+        .then(res => {
+          if (!res.data?.updateListOrder) {
+            setLists(oldLists);
+            refetch();
+          }
+        })
+        .catch(_ => {
+          setLists(oldLists);
+          refetch();
+        });
+
       return;
     }
 

@@ -7,14 +7,14 @@ import { useQuery } from '@apollo/client';
 interface BoardViewProps {}
 
 export const BoardView: React.FC<BoardViewProps> = (props) => {
-  const { loading, data } = useQuery<Record<string, Board>>(GET_BOARD, { variables: { id: "602ee9c00f16fe8c02efcb94" }});
+  const { loading, data, refetch } = useQuery<Record<string, Board>>(GET_BOARD, { variables: { id: "602ee9c00f16fe8c02efcb94" }});
 
   if (loading) return null;
 
   return (
     <>
       <div> Stub for board view </div>
-      {data && data.getBoard && <BoardComponent board={{...data.getBoard}} />}
+      {data && data.getBoard && <BoardComponent board={{...data.getBoard}} refetch={refetch} />}
     </>
   );
 }
