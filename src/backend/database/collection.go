@@ -60,12 +60,32 @@ func (coll *MongoCollection) UpdateByIDWithTimeout(ID string, update interface{}
 	filter := bson.M{constants.IDField: ObjectID}
 	opts := options.Update().SetUpsert(false)
 	_, err = coll.collection.UpdateOne(ctx, filter, update, opts)
-	if err != nil {
-		return err
-	}
-	return nil
+	return err
 }
 
 func (coll *MongoCollection) UpdateByID(ID string, update interface{}) error {
 	return coll.UpdateByIDWithTimeout(ID, update, tenSeconds)
+}
+
+func (coll *MongoCollection) BulkUpdateByIDsWithTimeout(idsToUpdate map[string]interface{}, timeout time.Duration) error {
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	var models []mongo.WriteModel
+
+	for id, update := range idsToUpdate {
+		ObjectID, err := primitive.ObjectIDFromHex(id)
+		if err != nil {
+			return err
+		}
+		filter := bson.M{constants.IDField: ObjectID}
+		updateModel := mongo.NewUpdateOneModel().SetFilter(filter).SetUpdate(update).SetUpsert(false)
+		models = append(models, updateModel)
+	}
+	opts := options.BulkWrite().SetOrdered(false)
+	_, err := coll.collection.BulkWrite(ctx, models, opts)
+	return err
+}
+
+func (coll *MongoCollection) BulkUpdateByIDs(idsToUpdate map[string]interface{}) error {
+	return coll.BulkUpdateByIDsWithTimeout(idsToUpdate, thirtySeconds)
 }

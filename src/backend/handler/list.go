@@ -89,7 +89,13 @@ func CreateList(list *model.NewList) (*model.List, error) {
 	res.Decode(&board)
 
 	operation := func() (interface{}, error) {
-		res, err := listCollection.InsertOne(list)
+		document := map[string]interface{}{
+			"name":          list.Name,
+			"parentBoardId": list.ParentBoardID,
+			"cardOrder":     make([]interface{}, 0),
+		}
+
+		res, err := listCollection.InsertOne(document)
 		if err != nil {
 			return nil, err
 		}
@@ -103,7 +109,7 @@ func CreateList(list *model.NewList) (*model.List, error) {
 		return &model.List{
 			ID:    res,
 			Name:  list.Name,
-			Cards: nil,
+			Cards: make([]*model.CardMetaData, 0),
 		}, nil
 	}
 

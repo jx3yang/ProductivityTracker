@@ -20,3 +20,33 @@ func moveElement(list []string, srcIdx int, destIdx int) []string {
 
 	return newList
 }
+
+func removeOneFromList(list []string, idx int) []string {
+	var newList []string
+
+	for i, element := range list {
+		if i != idx {
+			newList = append(newList, element)
+		}
+	}
+
+	return newList
+}
+
+func addOneToList(list []string, idx int, elem string) []string {
+	var newList []string
+
+	if len(list) == 0 {
+		newList = append(newList, elem)
+		return newList
+	}
+
+	for i, element := range list {
+		if i == idx {
+			newList = append(newList, elem)
+		}
+		newList = append(newList, element)
+	}
+
+	return newList
+}

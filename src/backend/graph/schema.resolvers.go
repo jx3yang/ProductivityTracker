@@ -36,7 +36,7 @@ func (r *queryResolver) GetBoard(ctx context.Context, id string) (*model.Board, 
 }
 
 func (r *mutationResolver) UpdateCardOrder(ctx context.Context, changeCardOrder model.ChangeCardOrder) (bool, error) {
-	return true, nil
+	return handler.UpdateCardOrder(&changeCardOrder)
 }
 
 func (r *mutationResolver) UpdateListOrder(ctx context.Context, changeListOrder model.ChangeListOrder) (bool, error) {

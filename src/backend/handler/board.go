@@ -49,13 +49,18 @@ func FindBoardByID(ID string) (*model.Board, error) {
 }
 
 func CreateBoard(newBoard *model.NewBoard) (*model.Board, error) {
-	res, err := boardCollection.InsertOne(newBoard)
+	document := map[string]interface{}{
+		"name":      newBoard.Name,
+		"listOrder": make([]interface{}, 0),
+	}
+
+	res, err := boardCollection.InsertOne(document)
 	if err != nil {
 		return nil, err
 	}
 	return &model.Board{
 		ID:    res,
 		Name:  newBoard.Name,
-		Lists: nil,
+		Lists: make([]*model.List, 0),
 	}, nil
 }
