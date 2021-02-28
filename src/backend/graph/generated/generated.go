@@ -71,9 +71,11 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
-		CreateBoard func(childComplexity int, board model.NewBoard) int
-		CreateCard  func(childComplexity int, card model.NewCard) int
-		CreateList  func(childComplexity int, list model.NewList) int
+		CreateBoard     func(childComplexity int, board model.NewBoard) int
+		CreateCard      func(childComplexity int, card model.NewCard) int
+		CreateList      func(childComplexity int, list model.NewList) int
+		UpdateCardOrder func(childComplexity int, changeCardOrder model.ChangeCardOrder) int
+		UpdateListOrder func(childComplexity int, changeListOrder model.ChangeListOrder) int
 	}
 
 	Query struct {
@@ -87,6 +89,8 @@ type MutationResolver interface {
 	CreateCard(ctx context.Context, card model.NewCard) (*model.Card, error)
 	CreateList(ctx context.Context, list model.NewList) (*model.List, error)
 	CreateBoard(ctx context.Context, board model.NewBoard) (*model.Board, error)
+	UpdateCardOrder(ctx context.Context, changeCardOrder model.ChangeCardOrder) (bool, error)
+	UpdateListOrder(ctx context.Context, changeListOrder model.ChangeListOrder) (bool, error)
 }
 type QueryResolver interface {
 	GetCard(ctx context.Context, id string) (*model.Card, error)
@@ -250,6 +254,30 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.CreateList(childComplexity, args["list"].(model.NewList)), true
 
+	case "Mutation.updateCardOrder":
+		if e.complexity.Mutation.UpdateCardOrder == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateCardOrder_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UpdateCardOrder(childComplexity, args["changeCardOrder"].(model.ChangeCardOrder)), true
+
+	case "Mutation.updateListOrder":
+		if e.complexity.Mutation.UpdateListOrder == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateListOrder_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UpdateListOrder(childComplexity, args["changeListOrder"].(model.ChangeListOrder)), true
+
 	case "Query.getBoard":
 		if e.complexity.Query.GetBoard == nil {
 			break
@@ -380,6 +408,15 @@ input NewCard {
   parentBoardId: ID!
   parentListId: ID!
 }
+
+input ChangeCardOrder {
+  boardID: ID!
+  srcListId: ID!
+  destListId: ID!
+  cardId: ID!
+  srcIdx: Int!
+  destIdx: Int!
+}
 `, BuiltIn: false},
 	{Name: "graph/list.schema.graphqls", Input: `type List {
   _id: ID!
@@ -392,11 +429,21 @@ input NewList {
   name: String!
   parentBoardId: ID!
 }
+
+input ChangeListOrder {
+  boardID: ID!
+  listID: ID!
+  srcIdx: Int!
+  destIdx: Int!
+}
 `, BuiltIn: false},
 	{Name: "graph/mutation.schema.graphqls", Input: `type Mutation {
   createCard(card: NewCard!): Card!
   createList(list: NewList!): List!
   createBoard(board: NewBoard!): Board!
+
+  updateCardOrder(changeCardOrder: ChangeCardOrder!): Boolean!
+  updateListOrder(changeListOrder: ChangeListOrder!): Boolean!
 }
 `, BuiltIn: false},
 	{Name: "graph/query.schema.graphqls", Input: `type Query {
@@ -454,6 +501,36 @@ func (ec *executionContext) field_Mutation_createList_args(ctx context.Context, 
 		}
 	}
 	args["list"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_updateCardOrder_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.ChangeCardOrder
+	if tmp, ok := rawArgs["changeCardOrder"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("changeCardOrder"))
+		arg0, err = ec.unmarshalNChangeCardOrder2githubᚗcomᚋjx3yangᚋProductivityTrackerᚋsrcᚋbackendᚋgraphᚋmodelᚐChangeCardOrder(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["changeCardOrder"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_updateListOrder_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.ChangeListOrder
+	if tmp, ok := rawArgs["changeListOrder"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("changeListOrder"))
+		arg0, err = ec.unmarshalNChangeListOrder2githubᚗcomᚋjx3yangᚋProductivityTrackerᚋsrcᚋbackendᚋgraphᚋmodelᚐChangeListOrder(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["changeListOrder"] = arg0
 	return args, nil
 }
 
@@ -1192,6 +1269,90 @@ func (ec *executionContext) _Mutation_createBoard(ctx context.Context, field gra
 	res := resTmp.(*model.Board)
 	fc.Result = res
 	return ec.marshalNBoard2ᚖgithubᚗcomᚋjx3yangᚋProductivityTrackerᚋsrcᚋbackendᚋgraphᚋmodelᚐBoard(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_updateCardOrder(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_updateCardOrder_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().UpdateCardOrder(rctx, args["changeCardOrder"].(model.ChangeCardOrder))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_updateListOrder(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_updateListOrder_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().UpdateListOrder(rctx, args["changeListOrder"].(model.ChangeListOrder))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_getCard(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -2478,6 +2639,110 @@ func (ec *executionContext) ___Type_ofType(ctx context.Context, field graphql.Co
 
 // region    **************************** input.gotpl *****************************
 
+func (ec *executionContext) unmarshalInputChangeCardOrder(ctx context.Context, obj interface{}) (model.ChangeCardOrder, error) {
+	var it model.ChangeCardOrder
+	var asMap = obj.(map[string]interface{})
+
+	for k, v := range asMap {
+		switch k {
+		case "boardID":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("boardID"))
+			it.BoardID, err = ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "srcListId":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("srcListId"))
+			it.SrcListID, err = ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "destListId":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("destListId"))
+			it.DestListID, err = ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "cardId":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cardId"))
+			it.CardID, err = ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "srcIdx":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("srcIdx"))
+			it.SrcIdx, err = ec.unmarshalNInt2int(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "destIdx":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("destIdx"))
+			it.DestIdx, err = ec.unmarshalNInt2int(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputChangeListOrder(ctx context.Context, obj interface{}) (model.ChangeListOrder, error) {
+	var it model.ChangeListOrder
+	var asMap = obj.(map[string]interface{})
+
+	for k, v := range asMap {
+		switch k {
+		case "boardID":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("boardID"))
+			it.BoardID, err = ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "listID":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("listID"))
+			it.ListID, err = ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "srcIdx":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("srcIdx"))
+			it.SrcIdx, err = ec.unmarshalNInt2int(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "destIdx":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("destIdx"))
+			it.DestIdx, err = ec.unmarshalNInt2int(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputNewBoard(ctx context.Context, obj interface{}) (model.NewBoard, error) {
 	var it model.NewBoard
 	var asMap = obj.(map[string]interface{})
@@ -2756,6 +3021,16 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			}
 		case "createBoard":
 			out.Values[i] = ec._Mutation_createBoard(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "updateCardOrder":
+			out.Values[i] = ec._Mutation_updateCardOrder(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "updateListOrder":
+			out.Values[i] = ec._Mutation_updateListOrder(ctx, field)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
@@ -3140,6 +3415,16 @@ func (ec *executionContext) marshalNCardMetaData2ᚖgithubᚗcomᚋjx3yangᚋPro
 	return ec._CardMetaData(ctx, sel, v)
 }
 
+func (ec *executionContext) unmarshalNChangeCardOrder2githubᚗcomᚋjx3yangᚋProductivityTrackerᚋsrcᚋbackendᚋgraphᚋmodelᚐChangeCardOrder(ctx context.Context, v interface{}) (model.ChangeCardOrder, error) {
+	res, err := ec.unmarshalInputChangeCardOrder(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNChangeListOrder2githubᚗcomᚋjx3yangᚋProductivityTrackerᚋsrcᚋbackendᚋgraphᚋmodelᚐChangeListOrder(ctx context.Context, v interface{}) (model.ChangeListOrder, error) {
+	res, err := ec.unmarshalInputChangeListOrder(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) unmarshalNID2string(ctx context.Context, v interface{}) (string, error) {
 	res, err := graphql.UnmarshalID(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -3147,6 +3432,21 @@ func (ec *executionContext) unmarshalNID2string(ctx context.Context, v interface
 
 func (ec *executionContext) marshalNID2string(ctx context.Context, sel ast.SelectionSet, v string) graphql.Marshaler {
 	res := graphql.MarshalID(v)
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+	}
+	return res
+}
+
+func (ec *executionContext) unmarshalNInt2int(ctx context.Context, v interface{}) (int, error) {
+	res, err := graphql.UnmarshalInt(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.SelectionSet, v int) graphql.Marshaler {
+	res := graphql.MarshalInt(v)
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "must not be null")

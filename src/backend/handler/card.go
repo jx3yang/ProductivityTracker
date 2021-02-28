@@ -7,7 +7,6 @@ import (
 	db "github.com/jx3yang/ProductivityTracker/src/backend/database"
 	"github.com/jx3yang/ProductivityTracker/src/backend/graph/model"
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo"
 )
 
 var cardCollection *db.MongoCollection
@@ -16,14 +15,25 @@ func initCardCollection(d *db.MongoDatabase) {
 	cardCollection = d.InitCollection(cardCollectionName)
 }
 
+func dbCardToGraphqlCard(card *db.Card) *model.Card {
+	return &model.Card{
+		ID:            card.ID.Hex(),
+		Name:          card.Name,
+		DueDate:       card.DueDate,
+		ParentBoardID: card.ParentBoardID,
+		ParentListID:  card.ParentListID,
+	}
+}
+
 func FindCardByID(ID string) (*model.Card, error) {
 	res, err := cardCollection.FindByID(ID)
 	if err != nil {
 		return nil, err
 	}
-	card := model.Card{}
+	card := db.Card{}
 	res.Decode(&card)
-	return &card, nil
+
+	return dbCardToGraphqlCard(&card), nil
 }
 
 func FindAllCardsFromList(listID string) ([]*model.Card, error) {
@@ -31,11 +41,17 @@ func FindAllCardsFromList(listID string) ([]*model.Card, error) {
 	if err != nil {
 		return nil, err
 	}
-	var cards []*model.Card
+	var cards []*db.Card
 	if err = cursor.All(context.TODO(), &cards); err != nil {
 		return nil, err
 	}
-	return cards, nil
+
+	var graphqlCards []*model.Card
+
+	for _, card := range cards {
+		graphqlCards = append(graphqlCards, dbCardToGraphqlCard(card))
+	}
+	return graphqlCards, nil
 }
 
 func CreateCard(card *model.NewCard) (*model.Card, error) {
@@ -43,10 +59,10 @@ func CreateCard(card *model.NewCard) (*model.Card, error) {
 	if err != nil {
 		return nil, err
 	}
-	list := List{}
+	list := db.List{}
 	res.Decode(&list)
 
-	callback := func(sessCtx mongo.SessionContext) (interface{}, error) {
+	operation := func() (interface{}, error) {
 		res, err := cardCollection.InsertOne(card)
 		if err != nil {
 			return nil, err
@@ -66,12 +82,6 @@ func CreateCard(card *model.NewCard) (*model.Card, error) {
 		}, nil
 	}
 
-	session, err := db.StartSession()
-	if err != nil {
-		return nil, err
-	}
-	ctx := context.Background()
-	defer session.EndSession(ctx)
-	result, err := session.WithTransaction(ctx, callback)
+	result, err := executeWithSession(operation)
 	return result.(*model.Card), err
 }

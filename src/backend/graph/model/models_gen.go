@@ -22,6 +22,22 @@ type CardMetaData struct {
 	DueDate *string `json:"dueDate" bson:"dueDate"`
 }
 
+type ChangeCardOrder struct {
+	BoardID    string `json:"boardID" bson:"boardID"`
+	SrcListID  string `json:"srcListId" bson:"srcListId"`
+	DestListID string `json:"destListId" bson:"destListId"`
+	CardID     string `json:"cardId" bson:"cardId"`
+	SrcIdx     int    `json:"srcIdx" bson:"srcIdx"`
+	DestIdx    int    `json:"destIdx" bson:"destIdx"`
+}
+
+type ChangeListOrder struct {
+	BoardID string `json:"boardID" bson:"boardID"`
+	ListID  string `json:"listID" bson:"listID"`
+	SrcIdx  int    `json:"srcIdx" bson:"srcIdx"`
+	DestIdx int    `json:"destIdx" bson:"destIdx"`
+}
+
 type List struct {
 	ID            string          `json:"_id" bson:"_id"`
 	Name          string          `json:"name" bson:"name"`

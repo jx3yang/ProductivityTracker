@@ -2,4 +2,7 @@ type Mutation {
   createCard(card: NewCard!): Card!
   createList(list: NewList!): List!
   createBoard(board: NewBoard!): Board!
+
+  updateCardOrder(changeCardOrder: ChangeCardOrder!): Boolean!
+  updateListOrder(changeListOrder: ChangeListOrder!): Boolean!
 }

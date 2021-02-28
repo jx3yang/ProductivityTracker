@@ -1,15 +1,24 @@
 package database
 
-import "go.mongodb.org/mongo-driver/mongo"
+import "go.mongodb.org/mongo-driver/bson/primitive"
 
-type MongoConnection struct {
-	client *mongo.Client
+type Board struct {
+	ID        primitive.ObjectID `json:"_id" bson:"_id"`
+	Name      string             `json:"name"`
+	ListOrder []string           `json:"listOrder"`
 }
 
-type MongoDatabase struct {
-	db *mongo.Database
+type List struct {
+	ID            primitive.ObjectID `json:"_id" bson:"_id"`
+	Name          string             `json:"name"`
+	ParentBoardID string             `json:"parentBoardId"`
+	CardOrder     []string           `json:"cardOrder"`
 }
 
-type MongoCollection struct {
-	collection *mongo.Collection
+type Card struct {
+	ID            primitive.ObjectID `json:"_id" bson:"_id"`
+	Name          string             `json:"name" bson:"name"`
+	DueDate       *string            `json:"dueDate" bson:"dueDate"`
+	ParentBoardID string             `json:"parentBoardId" bson:"parentBoardId"`
+	ParentListID  string             `json:"parentListId" bson:"parentListId"`
 }

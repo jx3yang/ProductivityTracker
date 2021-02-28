@@ -9,3 +9,10 @@ input NewList {
   name: String!
   parentBoardId: ID!
 }
+
+input ChangeListOrder {
+  boardID: ID!
+  listID: ID!
+  srcIdx: Int!
+  destIdx: Int!
+}

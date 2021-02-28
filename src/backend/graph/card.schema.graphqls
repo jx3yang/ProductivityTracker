@@ -18,3 +18,12 @@ input NewCard {
   parentBoardId: ID!
   parentListId: ID!
 }
+
+input ChangeCardOrder {
+  boardID: ID!
+  srcListId: ID!
+  destListId: ID!
+  cardId: ID!
+  srcIdx: Int!
+  destIdx: Int!
+}

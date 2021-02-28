@@ -2,12 +2,12 @@ package handler
 
 import (
 	"context"
+	"errors"
 
 	"github.com/jx3yang/ProductivityTracker/src/backend/constants"
 	db "github.com/jx3yang/ProductivityTracker/src/backend/database"
 	model "github.com/jx3yang/ProductivityTracker/src/backend/graph/model"
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo"
 )
 
 var listCollection *db.MongoCollection
@@ -21,7 +21,7 @@ func FindAllListsFromBoard(boardID string) ([]*model.List, error) {
 	if err != nil {
 		return nil, err
 	}
-	var dbLists []*List
+	var dbLists []*db.List
 	if err = cursor.All(context.TODO(), &dbLists); err != nil {
 		return nil, err
 	}
@@ -43,7 +43,7 @@ func FindListByID(ID string) (*model.List, error) {
 	if err != nil {
 		return nil, err
 	}
-	list := List{}
+	list := db.List{}
 	res.Decode(&list)
 	cards, err := FindAllCardsFromList(ID)
 	if err != nil {
@@ -60,7 +60,7 @@ func FindListByID(ID string) (*model.List, error) {
 	for _, id := range list.CardOrder {
 		card, ok := idToCardMap[id]
 		if !ok {
-			panic("Could not find id " + id + " in the fetched cards")
+			return nil, errors.New("Could not find id " + id + " in the fetched cards")
 		}
 		orderedCards = append(orderedCards,
 			&model.CardMetaData{
@@ -85,10 +85,10 @@ func CreateList(list *model.NewList) (*model.List, error) {
 		return nil, err
 	}
 
-	var board Board
+	var board db.Board
 	res.Decode(&board)
 
-	callback := func(sessCtx mongo.SessionContext) (interface{}, error) {
+	operation := func() (interface{}, error) {
 		res, err := listCollection.InsertOne(list)
 		if err != nil {
 			return nil, err
@@ -107,12 +107,51 @@ func CreateList(list *model.NewList) (*model.List, error) {
 		}, nil
 	}
 
-	session, err := db.StartSession()
-	if err != nil {
-		return nil, err
-	}
-	ctx := context.Background()
-	defer session.EndSession(ctx)
-	result, err := session.WithTransaction(ctx, callback)
+	result, err := executeWithSession(operation)
 	return result.(*model.List), err
+}
+
+func UpdateListOrder(changeListOrder *model.ChangeListOrder) (bool, error) {
+	if changeListOrder.SrcIdx == changeListOrder.DestIdx {
+		return true, nil
+	}
+
+	operation := func() (interface{}, error) {
+		boardID := changeListOrder.BoardID
+		listID := changeListOrder.ListID
+		srcIdx := changeListOrder.SrcIdx
+
+		res, err := boardCollection.FindByID(boardID)
+		if err != nil {
+			return false, err
+		}
+
+		board := db.Board{}
+		res.Decode(&board)
+
+		listOrder := board.ListOrder
+
+		if srcIdx >= len(listOrder) || listOrder[srcIdx] != listID {
+			return false, errors.New("The board state is modified")
+		}
+
+		destIdx := changeListOrder.DestIdx
+		if len(listOrder) <= destIdx {
+			destIdx = len(listOrder) - 1
+		}
+
+		if srcIdx == destIdx {
+			return true, nil
+		}
+
+		newOrder := moveElement(listOrder, srcIdx, destIdx)
+
+		update := bson.M{"$set": bson.M{constants.ListOrderField: newOrder}}
+		err = boardCollection.UpdateByID(board.ID.Hex(), update)
+
+		return err == nil, err
+	}
+
+	result, err := executeWithSession(operation)
+	return result.(bool), err
 }

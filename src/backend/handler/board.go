@@ -1,6 +1,8 @@
 package handler
 
 import (
+	"errors"
+
 	db "github.com/jx3yang/ProductivityTracker/src/backend/database"
 	model "github.com/jx3yang/ProductivityTracker/src/backend/graph/model"
 )
@@ -17,7 +19,7 @@ func FindBoardByID(ID string) (*model.Board, error) {
 		return nil, err
 	}
 
-	board := Board{}
+	board := db.Board{}
 	res.Decode(&board)
 	lists, err := FindAllListsFromBoard(ID)
 	if err != nil {
@@ -34,7 +36,7 @@ func FindBoardByID(ID string) (*model.Board, error) {
 	for _, id := range board.ListOrder {
 		list, ok := idToListsMap[id]
 		if !ok {
-			panic("Could not find id " + id + " in the fetched lists")
+			return nil, errors.New("Could not find id " + id + " in the fetched lists")
 		}
 		orderedLists = append(orderedLists, list)
 	}

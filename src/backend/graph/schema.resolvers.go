@@ -35,6 +35,14 @@ func (r *queryResolver) GetBoard(ctx context.Context, id string) (*model.Board, 
 	return handler.FindBoardByID(id)
 }
 
+func (r *mutationResolver) UpdateCardOrder(ctx context.Context, changeCardOrder model.ChangeCardOrder) (bool, error) {
+	return true, nil
+}
+
+func (r *mutationResolver) UpdateListOrder(ctx context.Context, changeListOrder model.ChangeListOrder) (bool, error) {
+	return handler.UpdateListOrder(&changeListOrder)
+}
+
 // Mutation returns generated.MutationResolver implementation.
 func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResolver{r} }
 
