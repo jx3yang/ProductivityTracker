@@ -3,7 +3,6 @@ package handler
 import (
 	"context"
 	"errors"
-	"fmt"
 
 	"github.com/jx3yang/ProductivityTracker/src/backend/constants"
 	db "github.com/jx3yang/ProductivityTracker/src/backend/database"
@@ -162,7 +161,6 @@ func updateCardOrderDifferentLists(changeCardOrder *model.ChangeCardOrder) (bool
 	destListCardOrder := destList.CardOrder
 
 	if srcIdx >= len(srcListCardOrder) || srcListCardOrder[srcIdx] != cardID {
-		fmt.Println(srcListCardOrder)
 		return false, errors.New("The list state is modified")
 	}
 
