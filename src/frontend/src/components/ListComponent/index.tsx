@@ -4,14 +4,16 @@ import List from 'src/models/list';
 import { CardComponent } from 'src/components/CardComponent';
 import { CARD } from 'src/components/utils/constants';
 import './style.css';
+import AddCard from '../AddCard';
 
 interface ListComponentProps {
   list: List;
   index: number;
+  onAddCard?: (name: string, parentListId: string) => void;
 }
 
 export const ListComponent: React.FC<ListComponentProps> = (props) => {
-  const { list, index } = props;
+  const { list, index, onAddCard } = props;
   const { _id: listId, cards, name } = list;
 
   return (
@@ -31,6 +33,11 @@ export const ListComponent: React.FC<ListComponentProps> = (props) => {
                 )
               }
             </Droppable>
+            <AddCard
+              onAdd={(name: string) => {
+                if (onAddCard) onAddCard(name, listId);
+              }}
+            />
           </div>
         )}
       </Draggable>}

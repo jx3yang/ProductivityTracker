@@ -9,12 +9,27 @@ export interface ChangeCardOrder {
   destIdx: number;
 }
 
+export interface NewCard {
+  name: string;
+  parentListId: string;
+  parentBoardId: string;
+}
+
 const UPDATE_CARD_ORDER = gql`
   mutation updateCardOrder($changeCardOrder: ChangeCardOrder!) {
     updateCardOrder(changeCardOrder: $changeCardOrder)
   }
 `
 
+const CREATE_CARD = gql`
+  mutation createCard($card: NewCard!) {
+    createCard(card: $card) {
+      _id
+    }
+  }
+`
+
 export {
-  UPDATE_CARD_ORDER
+  UPDATE_CARD_ORDER,
+  CREATE_CARD,
 }

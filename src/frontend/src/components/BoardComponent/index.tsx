@@ -9,7 +9,7 @@ import { moveElement, addOneToList, removeOneFromList } from 'src/components/uti
 
 import { ChangeListOrder, CREATE_LIST, NewList, UPDATE_LIST_ORDER } from 'src/graphql/list';
 import { ApolloQueryResult, useMutation } from '@apollo/client';
-import { ChangeCardOrder, UPDATE_CARD_ORDER } from 'src/graphql/card';
+import { ChangeCardOrder, NewCard, UPDATE_CARD_ORDER, CREATE_CARD } from 'src/graphql/card';
 import { AddList } from '../AddList';
 import { Grid } from '@material-ui/core';
 
@@ -28,6 +28,7 @@ export const BoardComponent: React.FC<BoardComponentProps> = (props) => {
   const [updateCardOrder] = useMutation(UPDATE_CARD_ORDER);
 
   const [createList] = useMutation(CREATE_LIST);
+  const [createCard] = useMutation(CREATE_CARD);
 
   useEffect(() => {
     setLists(board.lists || []);
@@ -146,6 +147,32 @@ export const BoardComponent: React.FC<BoardComponentProps> = (props) => {
     }
   }
 
+  const addCard = (name: string, parentListId: string) => {
+    if (name != '') {
+      const card: NewCard = {
+        name,
+        parentListId,
+        parentBoardId: boardId,
+      };
+
+      createCard({ variables: { card }})
+        .then(res => {
+          if (res.data?.createCard?._id) {
+            const { _id } = res.data?.createCard;
+            const newCard: Card = { _id, name };
+            const currLists = [...lists];
+            const sourceListIdx = currLists.findIndex(list => list._id === parentListId);
+            const sourceList = currLists[sourceListIdx];
+            const newOrder = addOneToList(sourceList.cards || [], (sourceList.cards || []).length, newCard);
+            currLists[sourceListIdx] = { ...sourceList, cards: newOrder };
+            setLists(currLists);
+          }
+          else refetch();
+        })
+        .catch(_ => refetch());
+    }
+  }
+
   return (
     <DragDropContext onDragEnd={onDragEnd}>
       <div>Title: {name}</div>
@@ -156,7 +183,7 @@ export const BoardComponent: React.FC<BoardComponentProps> = (props) => {
                   <div ref={provided.innerRef} {...provided.droppableProps} style={{ display: 'flex' }}>
                     {lists.map((list, index) => 
                       <Grid item xs key={list._id}>
-                        <ListComponent list={list} index={index} key={list._id} />
+                        <ListComponent list={list} index={index} key={list._id} onAddCard={addCard} />
                       </Grid>
                     )}
                     {provided.placeholder}
@@ -164,7 +191,7 @@ export const BoardComponent: React.FC<BoardComponentProps> = (props) => {
               )}
             </Droppable>}
           <Grid item xs>
-            <AddList onAdd={addList}/>
+            <AddList onAdd={addList} />
           </Grid>
         </Grid>
       </div>
