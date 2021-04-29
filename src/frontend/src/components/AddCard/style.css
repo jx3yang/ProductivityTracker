@@ -1,11 +1,9 @@
 .addCard {
   margin: 8px !important;
-  border: 1px solid lightgrey !important;
 }
 
 .addCardName {
   margin: 8px !important;
-  border: 1px solid lightgrey !important;
   display: flex !important;
 }
 

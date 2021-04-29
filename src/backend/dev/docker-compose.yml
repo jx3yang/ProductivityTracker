@@ -1,11 +1,50 @@
 version: '3.9'
 
 services:
-  mongo:
+  mongo1:
+    hostname: mongo1
     image: 'mongo:4.2.6-bionic'
-    container_name: mongo_db
+    container_name: mongo_db_1
+    expose: 
+      - 27017
+    restart: always
     ports: 
       - '27017:27017'
-    restart: always
     volumes:
       - ./data:/data/db
+    entrypoint: ["/usr/bin/mongod", "--bind_ip_all", "--replSet", "rs"]
+  mongo2:
+    hostname: mongo2
+    container_name: mongo_db_2
+    image: 'mongo:4.2.6-bionic'
+    expose: 
+      - 27017
+    restart: always
+    ports: 
+      - '27018:27017'
+    volumes:
+      - ./data_2:/data/db
+    entrypoint: ["/usr/bin/mongod", "--bind_ip_all", "--replSet", "rs"]
+  mongo3:
+    hostname: mongo3
+    container_name: mongo_db_3
+    image: 'mongo:4.2.6-bionic'
+    expose: 
+      - 27017
+    restart: always
+    ports: 
+      - '27019:27017'
+    volumes:
+      - ./data_3:/data/db
+    entrypoint: ["/usr/bin/mongod", "--bind_ip_all", "--replSet", "rs"]
+  mongosetup:
+    image: 'mongo:4.2.6-bionic'
+    depends_on: 
+      - mongo1
+      - mongo2
+      - mongo3
+    volumes: 
+      - ./scripts:/scripts
+    restart: "no"
+    entrypoint: ["bash", "/scripts/mongo_setup.sh"]
+

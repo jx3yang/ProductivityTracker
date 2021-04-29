@@ -43,6 +43,22 @@ func (r *mutationResolver) UpdateListOrder(ctx context.Context, changeListOrder 
 	return handler.UpdateListOrder(&changeListOrder)
 }
 
+func (r *mutationResolver) ArchiveCard(ctx context.Context, card model.CardIdentifier) (bool, error) {
+	return handler.ArchiveCard(&card)
+}
+
+func (r *mutationResolver) ArchiveList(ctx context.Context, list model.ListIdentifier) (bool, error) {
+	return handler.ArchiveList(&list)
+}
+
+func (r *mutationResolver) DeleteCard(ctx context.Context, card model.CardIdentifier) (bool, error) {
+	return handler.DeleteCard(&card)
+}
+
+func (r *mutationResolver) DeleteList(ctx context.Context, list model.ListIdentifier) (bool, error) {
+	return handler.DeleteList(&list)
+}
+
 // Mutation returns generated.MutationResolver implementation.
 func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResolver{r} }
 

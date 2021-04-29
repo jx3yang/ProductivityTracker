@@ -11,34 +11,44 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-func (coll *MongoCollection) FindByIDWithTimeout(ID string, timeout time.Duration) (*mongo.SingleResult, error) {
+func (coll *MongoCollection) FindByIDWithTimeout(ID string, timeout time.Duration, ctx context.Context) (*mongo.SingleResult, error) {
 	ObjectID, err := primitive.ObjectIDFromHex(ID)
 	if err != nil {
 		return nil, err
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
+	if ctx == nil {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(context.Background(), timeout)
+		defer cancel()
+	}
 	return coll.collection.FindOne(ctx, bson.M{constants.IDField: ObjectID}), nil
 }
 
-func (coll *MongoCollection) FindByID(ID string) (*mongo.SingleResult, error) {
-	return coll.FindByIDWithTimeout(ID, tenSeconds)
+func (coll *MongoCollection) FindByID(ID string, ctx context.Context) (*mongo.SingleResult, error) {
+	return coll.FindByIDWithTimeout(ID, tenSeconds, ctx)
 }
 
-func (coll *MongoCollection) FindAllWithTimeout(filter interface{}, timeout time.Duration) (*mongo.Cursor, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
+func (coll *MongoCollection) FindAllWithTimeout(filter interface{}, timeout time.Duration, ctx context.Context) (*mongo.Cursor, error) {
+	if ctx == nil {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(context.Background(), timeout)
+		defer cancel()
+	}
 
 	return coll.collection.Find(ctx, filter)
 }
 
-func (coll *MongoCollection) FindAll(filter interface{}) (*mongo.Cursor, error) {
-	return coll.FindAllWithTimeout(filter, thirtySeconds)
+func (coll *MongoCollection) FindAll(filter interface{}, ctx context.Context) (*mongo.Cursor, error) {
+	return coll.FindAllWithTimeout(filter, thirtySeconds, ctx)
 }
 
-func (coll *MongoCollection) InsertOneWithTimeout(document interface{}, timeout time.Duration) (string, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
+func (coll *MongoCollection) InsertOneWithTimeout(document interface{}, timeout time.Duration, ctx context.Context) (string, error) {
+	if ctx == nil {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(context.Background(), timeout)
+		defer cancel()
+	}
+
 	res, err := coll.collection.InsertOne(ctx, document)
 	if err != nil {
 		return "", err
@@ -46,13 +56,16 @@ func (coll *MongoCollection) InsertOneWithTimeout(document interface{}, timeout 
 	return res.InsertedID.(primitive.ObjectID).Hex(), nil
 }
 
-func (coll *MongoCollection) InsertOne(document interface{}) (string, error) {
-	return coll.InsertOneWithTimeout(document, tenSeconds)
+func (coll *MongoCollection) InsertOne(document interface{}, ctx context.Context) (string, error) {
+	return coll.InsertOneWithTimeout(document, tenSeconds, ctx)
 }
 
-func (coll *MongoCollection) UpdateByIDWithTimeout(ID string, update interface{}, timeout time.Duration) error {
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
+func (coll *MongoCollection) UpdateByIDWithTimeout(ID string, update interface{}, timeout time.Duration, ctx context.Context) error {
+	if ctx == nil {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(context.Background(), timeout)
+		defer cancel()
+	}
 	ObjectID, err := primitive.ObjectIDFromHex(ID)
 	if err != nil {
 		return err
@@ -63,13 +76,17 @@ func (coll *MongoCollection) UpdateByIDWithTimeout(ID string, update interface{}
 	return err
 }
 
-func (coll *MongoCollection) UpdateByID(ID string, update interface{}) error {
-	return coll.UpdateByIDWithTimeout(ID, update, tenSeconds)
+func (coll *MongoCollection) UpdateByID(ID string, update interface{}, ctx context.Context) error {
+	return coll.UpdateByIDWithTimeout(ID, update, tenSeconds, ctx)
 }
 
-func (coll *MongoCollection) BulkUpdateByIDsWithTimeout(idsToUpdate map[string]interface{}, timeout time.Duration) error {
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
+func (coll *MongoCollection) BulkUpdateByIDsWithTimeout(idsToUpdate map[string]interface{}, timeout time.Duration, ctx context.Context) error {
+	if ctx == nil {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(context.Background(), timeout)
+		defer cancel()
+	}
+
 	var models []mongo.WriteModel
 
 	for id, update := range idsToUpdate {
@@ -86,6 +103,6 @@ func (coll *MongoCollection) BulkUpdateByIDsWithTimeout(idsToUpdate map[string]i
 	return err
 }
 
-func (coll *MongoCollection) BulkUpdateByIDs(idsToUpdate map[string]interface{}) error {
-	return coll.BulkUpdateByIDsWithTimeout(idsToUpdate, thirtySeconds)
+func (coll *MongoCollection) BulkUpdateByIDs(idsToUpdate map[string]interface{}, ctx context.Context) error {
+	return coll.BulkUpdateByIDsWithTimeout(idsToUpdate, thirtySeconds, ctx)
 }

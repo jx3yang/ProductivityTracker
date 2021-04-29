@@ -3,6 +3,7 @@ package config
 import (
 	"io/ioutil"
 	"os"
+	"strings"
 
 	"gopkg.in/yaml.v3"
 )
@@ -12,10 +13,11 @@ type Config struct {
 
 	Port string `env:"PORT" yaml:"port"`
 
-	DBHost     string `env:"DB_HOST" yaml:"db_host"`
-	DBPort     string `env:"DB_PORT" yaml:"db_port"`
-	DBUsername string `env:"DB_USERNAME" yaml:"db_username"`
-	DBPassword string `env:"DB_PASSWORD" yaml:"db_password"`
+	DBName      string   `env:"DB_NAME" yaml:"db_name"`
+	DBAddresses []string `env:"DB_ADDRESSES" yaml:"db_addresses"`
+	ReplicaSet  string   `env:"REPL_SET" yaml:"repl_set"`
+	DBUsername  string   `env:"DB_USERNAME" yaml:"db_username"`
+	DBPassword  string   `env:"DB_PASSWORD" yaml:"db_password"`
 }
 
 const Prod = "PROD"
@@ -34,11 +36,11 @@ func GetConfig(configFileYml *string) (*Config, error) {
 		return &config, nil
 	}
 	return &Config{
-		Env:        os.Getenv("ENV"),
-		Port:       os.Getenv("PORT"),
-		DBHost:     os.Getenv("DB_HOST"),
-		DBPort:     os.Getenv("DB_PORT"),
-		DBUsername: os.Getenv("DB_USERNAME"),
-		DBPassword: os.Getenv("DB_PASSWORD"),
+		Env:         os.Getenv("ENV"),
+		Port:        os.Getenv("PORT"),
+		DBAddresses: strings.Split(os.Getenv("DB_ADDRESSES"), ","),
+		ReplicaSet:  os.Getenv("REPL_SET"),
+		DBUsername:  os.Getenv("DB_USERNAME"),
+		DBPassword:  os.Getenv("DB_PASSWORD"),
 	}, nil
 }

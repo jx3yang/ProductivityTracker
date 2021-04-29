@@ -1,8 +1,5 @@
 package constants
 
-// db name
-const PT = "pt"
-
 // field names
 const (
 	IDField            = "_id"
@@ -14,4 +11,5 @@ const (
 	CardsField         = "cards"
 	CardOrderField     = "cardOrder"
 	ListOrderField     = "listOrder"
+	ArchivedField      = "archived"
 )

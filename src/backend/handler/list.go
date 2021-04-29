@@ -8,6 +8,7 @@ import (
 	db "github.com/jx3yang/ProductivityTracker/src/backend/database"
 	model "github.com/jx3yang/ProductivityTracker/src/backend/graph/model"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 var listCollection *db.MongoCollection
@@ -16,8 +17,10 @@ func initListCollection(d *db.MongoDatabase) {
 	listCollection = d.InitCollection(listCollectionName)
 }
 
-func FindAllListsFromBoard(boardID string) ([]*model.List, error) {
-	cursor, err := listCollection.FindAll(bson.M{constants.ParentBoardIDField: boardID})
+func FindAllUnarchivedListsFromBoard(boardID string) ([]*model.List, error) {
+	cursor, err := listCollection.FindAll(
+		bson.M{constants.ParentBoardIDField: boardID, constants.ArchivedField: bson.M{"$ne": true}}, nil,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -39,13 +42,13 @@ func FindAllListsFromBoard(boardID string) ([]*model.List, error) {
 }
 
 func FindListByID(ID string) (*model.List, error) {
-	res, err := listCollection.FindByID(ID)
+	res, err := listCollection.FindByID(ID, nil)
 	if err != nil {
 		return nil, err
 	}
 	list := db.List{}
 	res.Decode(&list)
-	cards, err := FindAllCardsFromList(ID)
+	cards, err := FindAllUnarchivedCardsFromList(ID)
 	if err != nil {
 		return nil, err
 	}
@@ -80,34 +83,34 @@ func FindListByID(ID string) (*model.List, error) {
 }
 
 func CreateList(list *model.NewList) (*model.List, error) {
-	res, err := boardCollection.FindByID(list.ParentBoardID)
-	if err != nil {
-		return nil, err
-	}
+	operation := func(sessCtx mongo.SessionContext) (interface{}, error) {
+		res, err := boardCollection.FindByID(list.ParentBoardID, sessCtx)
+		if err != nil {
+			return nil, err
+		}
 
-	var board db.Board
-	res.Decode(&board)
+		var board db.Board
+		res.Decode(&board)
 
-	operation := func() (interface{}, error) {
 		document := map[string]interface{}{
 			"name":          list.Name,
 			"parentBoardId": list.ParentBoardID,
 			"cardOrder":     make([]interface{}, 0),
 		}
 
-		res, err := listCollection.InsertOne(document)
+		listID, err := listCollection.InsertOne(document, sessCtx)
 		if err != nil {
 			return nil, err
 		}
-		newOrder := append(board.ListOrder, res)
+		newOrder := append(board.ListOrder, listID)
 		update := bson.M{"$set": bson.M{constants.ListOrderField: newOrder}}
-		err = boardCollection.UpdateByID(board.ID.Hex(), update)
+		err = boardCollection.UpdateByID(board.ID.Hex(), update, sessCtx)
 		if err != nil {
 			return nil, err
 		}
 
 		return &model.List{
-			ID:    res,
+			ID:    listID,
 			Name:  list.Name,
 			Cards: make([]*model.CardMetaData, 0),
 		}, nil
@@ -122,12 +125,12 @@ func UpdateListOrder(changeListOrder *model.ChangeListOrder) (bool, error) {
 		return true, nil
 	}
 
-	operation := func() (interface{}, error) {
+	operation := func(sessCtx mongo.SessionContext) (interface{}, error) {
 		boardID := changeListOrder.BoardID
 		listID := changeListOrder.ListID
 		srcIdx := changeListOrder.SrcIdx
 
-		res, err := boardCollection.FindByID(boardID)
+		res, err := boardCollection.FindByID(boardID, sessCtx)
 		if err != nil {
 			return false, err
 		}
@@ -153,11 +156,19 @@ func UpdateListOrder(changeListOrder *model.ChangeListOrder) (bool, error) {
 		newOrder := moveElement(listOrder, srcIdx, destIdx)
 
 		update := bson.M{"$set": bson.M{constants.ListOrderField: newOrder}}
-		err = boardCollection.UpdateByID(board.ID.Hex(), update)
+		err = boardCollection.UpdateByID(board.ID.Hex(), update, sessCtx)
 
 		return err == nil, err
 	}
 
 	result, err := executeWithSession(operation)
 	return result.(bool), err
+}
+
+func ArchiveList(list *model.ListIdentifier) (bool, error) {
+	return true, nil
+}
+
+func DeleteList(list *model.ListIdentifier) (bool, error) {
+	return true, nil
 }

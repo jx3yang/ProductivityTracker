@@ -14,14 +14,14 @@ func initBoardCollection(d *db.MongoDatabase) {
 }
 
 func FindBoardByID(ID string) (*model.Board, error) {
-	res, err := boardCollection.FindByID(ID)
+	res, err := boardCollection.FindByID(ID, nil)
 	if err != nil {
 		return nil, err
 	}
 
 	board := db.Board{}
 	res.Decode(&board)
-	lists, err := FindAllListsFromBoard(ID)
+	lists, err := FindAllUnarchivedListsFromBoard(ID)
 	if err != nil {
 		return nil, err
 	}
@@ -54,7 +54,7 @@ func CreateBoard(newBoard *model.NewBoard) (*model.Board, error) {
 		"listOrder": make([]interface{}, 0),
 	}
 
-	res, err := boardCollection.InsertOne(document)
+	res, err := boardCollection.InsertOne(document, nil)
 	if err != nil {
 		return nil, err
 	}

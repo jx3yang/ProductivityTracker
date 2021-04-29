@@ -8,6 +8,7 @@ import (
 	db "github.com/jx3yang/ProductivityTracker/src/backend/database"
 	"github.com/jx3yang/ProductivityTracker/src/backend/graph/model"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 var cardCollection *db.MongoCollection
@@ -27,7 +28,7 @@ func dbCardToGraphqlCard(card *db.Card) *model.Card {
 }
 
 func FindCardByID(ID string) (*model.Card, error) {
-	res, err := cardCollection.FindByID(ID)
+	res, err := cardCollection.FindByID(ID, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -37,8 +38,10 @@ func FindCardByID(ID string) (*model.Card, error) {
 	return dbCardToGraphqlCard(&card), nil
 }
 
-func FindAllCardsFromList(listID string) ([]*model.Card, error) {
-	cursor, err := cardCollection.FindAll(bson.M{constants.ParentListIDField: listID})
+func FindAllUnarchivedCardsFromList(listID string) ([]*model.Card, error) {
+	cursor, err := cardCollection.FindAll(
+		bson.M{constants.ParentListIDField: listID, constants.ArchivedField: bson.M{"$ne": true}}, nil,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -56,26 +59,30 @@ func FindAllCardsFromList(listID string) ([]*model.Card, error) {
 }
 
 func CreateCard(card *model.NewCard) (*model.Card, error) {
-	res, err := listCollection.FindByID(card.ParentListID)
-	if err != nil {
-		return nil, err
-	}
-	list := db.List{}
-	res.Decode(&list)
-
-	operation := func() (interface{}, error) {
-		res, err := cardCollection.InsertOne(card)
+	operation := func(sessCtx mongo.SessionContext) (interface{}, error) {
+		res, err := listCollection.FindByID(card.ParentListID, sessCtx)
 		if err != nil {
 			return nil, err
 		}
-		newOrder := append(list.CardOrder, res)
+		list := db.List{}
+		res.Decode(&list)
+
+		if list.ParentBoardID != card.ParentBoardID {
+			return nil, errors.New("The list with id " + card.ParentListID + " does not belong to board " + card.ParentBoardID)
+		}
+
+		cardID, err := cardCollection.InsertOne(card, sessCtx)
+		if err != nil {
+			return nil, err
+		}
+		newOrder := append(list.CardOrder, cardID)
 		update := bson.M{"$set": bson.M{constants.CardOrderField: newOrder}}
-		err = listCollection.UpdateByID(list.ID.Hex(), update)
+		err = listCollection.UpdateByID(list.ID.Hex(), update, sessCtx)
 		if err != nil {
 			return nil, err
 		}
 		return &model.Card{
-			ID:            res,
+			ID:            cardID,
 			Name:          card.Name,
 			DueDate:       card.DueDate,
 			ParentListID:  card.ParentListID,
@@ -84,15 +91,18 @@ func CreateCard(card *model.NewCard) (*model.Card, error) {
 	}
 
 	result, err := executeWithSession(operation)
+	if result == nil {
+		return nil, err
+	}
 	return result.(*model.Card), err
 }
 
-func updateCardOrderSameList(changeCardOrder *model.ChangeCardOrder) (bool, error) {
+func updateCardOrderSameList(changeCardOrder *model.ChangeCardOrder, ctx context.Context) (bool, error) {
 	srcListID := changeCardOrder.SrcListID
 	srcIdx := changeCardOrder.SrcIdx
 	cardID := changeCardOrder.CardID
 
-	res, err := listCollection.FindByID(srcListID)
+	res, err := listCollection.FindByID(srcListID, ctx)
 	if err != nil {
 		return false, err
 	}
@@ -122,18 +132,18 @@ func updateCardOrderSameList(changeCardOrder *model.ChangeCardOrder) (bool, erro
 	newOrder := moveElement(cardOrder, srcIdx, destIdx)
 
 	update := bson.M{"$set": bson.M{constants.CardOrderField: newOrder}}
-	err = listCollection.UpdateByID(srcListID, update)
+	err = listCollection.UpdateByID(srcListID, update, ctx)
 
 	return err == nil, err
 }
 
-func updateCardOrderDifferentLists(changeCardOrder *model.ChangeCardOrder) (bool, error) {
+func updateCardOrderDifferentLists(changeCardOrder *model.ChangeCardOrder, ctx context.Context) (bool, error) {
 	srcListID := changeCardOrder.SrcListID
 	destListID := changeCardOrder.DestListID
 	srcIdx := changeCardOrder.SrcIdx
 	cardID := changeCardOrder.CardID
 
-	res, err := listCollection.FindByID(srcListID)
+	res, err := listCollection.FindByID(srcListID, ctx)
 	if err != nil {
 		return false, err
 	}
@@ -145,7 +155,7 @@ func updateCardOrderDifferentLists(changeCardOrder *model.ChangeCardOrder) (bool
 		return false, errors.New("Source list does not belong to board with id " + changeCardOrder.BoardID)
 	}
 
-	res, err = listCollection.FindByID(destListID)
+	res, err = listCollection.FindByID(destListID, ctx)
 	if err != nil {
 		return false, err
 	}
@@ -176,13 +186,13 @@ func updateCardOrderDifferentLists(changeCardOrder *model.ChangeCardOrder) (bool
 	idsToUpdate[srcListID] = bson.M{"$set": bson.M{constants.CardOrderField: newSrcOrder}}
 	idsToUpdate[destListID] = bson.M{"$set": bson.M{constants.CardOrderField: newDestOrder}}
 
-	err = listCollection.BulkUpdateByIDs(idsToUpdate)
+	err = listCollection.BulkUpdateByIDs(idsToUpdate, ctx)
 
 	if err != nil {
 		return false, err
 	}
 
-	res, err = cardCollection.FindByID(cardID)
+	res, err = cardCollection.FindByID(cardID, ctx)
 	if err != nil {
 		return false, err
 	}
@@ -191,7 +201,7 @@ func updateCardOrderDifferentLists(changeCardOrder *model.ChangeCardOrder) (bool
 	res.Decode(&card)
 
 	parentListUpdate := bson.M{"$set": bson.M{constants.ParentListIDField: destListID}}
-	err = cardCollection.UpdateByID(cardID, parentListUpdate)
+	err = cardCollection.UpdateByID(cardID, parentListUpdate, ctx)
 
 	return err == nil, err
 }
@@ -201,13 +211,67 @@ func UpdateCardOrder(changeCardOrder *model.ChangeCardOrder) (bool, error) {
 		return true, nil
 	}
 
-	operation := func() (interface{}, error) {
+	operation := func(sessCtx mongo.SessionContext) (interface{}, error) {
 		if changeCardOrder.SrcListID == changeCardOrder.DestListID {
-			return updateCardOrderSameList(changeCardOrder)
+			return updateCardOrderSameList(changeCardOrder, sessCtx)
 		}
-		return updateCardOrderDifferentLists(changeCardOrder)
+		return updateCardOrderDifferentLists(changeCardOrder, sessCtx)
 	}
 
 	result, err := executeWithSession(operation)
 	return result.(bool), err
+}
+
+func ArchiveCard(card *model.CardIdentifier) (bool, error) {
+	operation := func(sessCtx mongo.SessionContext) (interface{}, error) {
+		res, err := listCollection.FindByID(card.ParentListID, sessCtx)
+		if err != nil {
+			return nil, err
+		}
+		list := db.List{}
+		res.Decode(&list)
+
+		if list.ParentBoardID != card.ParentBoardID {
+			return nil, errors.New("The list with id " + card.ParentListID + " does not belong to board " + card.ParentBoardID)
+		}
+
+		targetIdx := -1
+		for idx, cardID := range list.CardOrder {
+			if cardID == card.ID {
+				targetIdx = idx
+				break
+			}
+		}
+		if targetIdx == -1 {
+			return nil, errors.New("Card with id " + card.ID + " does not belong to list " + card.ParentListID)
+		}
+
+		idx := 0
+		newOrder := make([]string, len(list.CardOrder)-1)
+		for i := 0; i < len(newOrder); i++ {
+			if idx == targetIdx {
+				idx++
+			}
+			newOrder[i] = list.CardOrder[idx]
+			idx++
+		}
+
+		listUpdate := bson.M{"$set": bson.M{constants.CardOrderField: newOrder}}
+		err = listCollection.UpdateByID(card.ParentListID, listUpdate, sessCtx)
+		if err != nil {
+			return nil, err
+		}
+
+		cardUpdate := bson.M{"$set": bson.M{constants.ArchivedField: true}}
+		err = cardCollection.UpdateByID(card.ID, cardUpdate, sessCtx)
+
+		return err == nil, err
+	}
+
+	result, err := executeWithSession(operation)
+	return result.(bool), err
+}
+
+func DeleteCard(card *model.CardIdentifier) (bool, error) {
+	return true, nil
 }

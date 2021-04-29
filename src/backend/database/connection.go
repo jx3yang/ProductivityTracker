@@ -2,6 +2,7 @@ package database
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	"github.com/jx3yang/ProductivityTracker/src/backend/config"
@@ -16,7 +17,7 @@ var Client *MongoConnection
 
 func InitConnectionFromConfig(c *config.Config) (*MongoConnection, error) {
 	// TODO: add credentials
-	uri := "mongodb://" + c.DBHost + ":" + c.DBPort
+	uri := "mongodb://" + strings.Join(c.DBAddresses, ",") + "/" + c.DBName + "?replicaSet=" + c.ReplicaSet
 	client, err := newMongoConnection(uri)
 	if err != nil {
 		return nil, err

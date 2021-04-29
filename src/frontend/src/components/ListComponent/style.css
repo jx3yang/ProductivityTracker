@@ -9,7 +9,8 @@
 }
 
 .wrapper {
-  padding: 8px;
+  padding-left: 8px;
+  padding-right: 8px;
+  padding-top: 8px;
   flex-grow: 1;
-  min-height: 100px;
 }

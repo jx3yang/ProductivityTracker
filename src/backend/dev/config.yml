@@ -2,7 +2,12 @@ env: DEV
 
 port: '8080'
 
-db_host: localhost
-db_port: '27017'
+db_addresses:
+  - '127.0.0.1:27017'
+  - '127.0.0.1:27018'
+  - '127.0.0.1:27019'
+
+db_name: 'pt'
+repl_set: 'rs'
 db_username:
 db_password:

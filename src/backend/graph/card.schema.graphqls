@@ -27,3 +27,9 @@ input ChangeCardOrder {
   srcIdx: Int!
   destIdx: Int!
 }
+
+input CardIdentifier {
+  _id: ID!
+  parentListId: ID!
+  parentBoardId: ID!
+}

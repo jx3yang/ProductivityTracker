@@ -16,6 +16,12 @@ type Card struct {
 	ParentListID  string  `json:"parentListId" bson:"parentListId"`
 }
 
+type CardIdentifier struct {
+	ID            string `json:"_id" bson:"_id"`
+	ParentListID  string `json:"parentListId" bson:"parentListId"`
+	ParentBoardID string `json:"parentBoardId" bson:"parentBoardId"`
+}
+
 type CardMetaData struct {
 	ID      string  `json:"_id" bson:"_id"`
 	Name    string  `json:"name" bson:"name"`
@@ -43,6 +49,11 @@ type List struct {
 	Name          string          `json:"name" bson:"name"`
 	ParentBoardID string          `json:"parentBoardId" bson:"parentBoardId"`
 	Cards         []*CardMetaData `json:"cards" bson:"cards"`
+}
+
+type ListIdentifier struct {
+	ID            string `json:"_id" bson:"_id"`
+	ParentBoardID string `json:"parentBoardId" bson:"parentBoardId"`
 }
 
 type NewBoard struct {

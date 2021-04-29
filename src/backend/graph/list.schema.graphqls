@@ -16,3 +16,8 @@ input ChangeListOrder {
   srcIdx: Int!
   destIdx: Int!
 }
+
+input ListIdentifier {
+  _id: ID!
+  parentBoardId: ID!
+}

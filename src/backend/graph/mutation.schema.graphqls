@@ -5,4 +5,10 @@ type Mutation {
 
   updateCardOrder(changeCardOrder: ChangeCardOrder!): Boolean!
   updateListOrder(changeListOrder: ChangeListOrder!): Boolean!
+
+  archiveCard(card: CardIdentifier!): Boolean!
+  archiveList(list: ListIdentifier!): Boolean!
+
+  deleteCard(card: CardIdentifier!): Boolean!
+  deleteList(list: ListIdentifier!): Boolean!
 }

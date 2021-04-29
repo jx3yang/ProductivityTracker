@@ -71,9 +71,13 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
+		ArchiveCard     func(childComplexity int, card model.CardIdentifier) int
+		ArchiveList     func(childComplexity int, list model.ListIdentifier) int
 		CreateBoard     func(childComplexity int, board model.NewBoard) int
 		CreateCard      func(childComplexity int, card model.NewCard) int
 		CreateList      func(childComplexity int, list model.NewList) int
+		DeleteCard      func(childComplexity int, card model.CardIdentifier) int
+		DeleteList      func(childComplexity int, list model.ListIdentifier) int
 		UpdateCardOrder func(childComplexity int, changeCardOrder model.ChangeCardOrder) int
 		UpdateListOrder func(childComplexity int, changeListOrder model.ChangeListOrder) int
 	}
@@ -91,6 +95,10 @@ type MutationResolver interface {
 	CreateBoard(ctx context.Context, board model.NewBoard) (*model.Board, error)
 	UpdateCardOrder(ctx context.Context, changeCardOrder model.ChangeCardOrder) (bool, error)
 	UpdateListOrder(ctx context.Context, changeListOrder model.ChangeListOrder) (bool, error)
+	ArchiveCard(ctx context.Context, card model.CardIdentifier) (bool, error)
+	ArchiveList(ctx context.Context, list model.ListIdentifier) (bool, error)
+	DeleteCard(ctx context.Context, card model.CardIdentifier) (bool, error)
+	DeleteList(ctx context.Context, list model.ListIdentifier) (bool, error)
 }
 type QueryResolver interface {
 	GetCard(ctx context.Context, id string) (*model.Card, error)
@@ -218,6 +226,30 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.List.ParentBoardID(childComplexity), true
 
+	case "Mutation.archiveCard":
+		if e.complexity.Mutation.ArchiveCard == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_archiveCard_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.ArchiveCard(childComplexity, args["card"].(model.CardIdentifier)), true
+
+	case "Mutation.archiveList":
+		if e.complexity.Mutation.ArchiveList == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_archiveList_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.ArchiveList(childComplexity, args["list"].(model.ListIdentifier)), true
+
 	case "Mutation.createBoard":
 		if e.complexity.Mutation.CreateBoard == nil {
 			break
@@ -253,6 +285,30 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.CreateList(childComplexity, args["list"].(model.NewList)), true
+
+	case "Mutation.deleteCard":
+		if e.complexity.Mutation.DeleteCard == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_deleteCard_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.DeleteCard(childComplexity, args["card"].(model.CardIdentifier)), true
+
+	case "Mutation.deleteList":
+		if e.complexity.Mutation.DeleteList == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_deleteList_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.DeleteList(childComplexity, args["list"].(model.ListIdentifier)), true
 
 	case "Mutation.updateCardOrder":
 		if e.complexity.Mutation.UpdateCardOrder == nil {
@@ -417,6 +473,12 @@ input ChangeCardOrder {
   srcIdx: Int!
   destIdx: Int!
 }
+
+input CardIdentifier {
+  _id: ID!
+  parentListId: ID!
+  parentBoardId: ID!
+}
 `, BuiltIn: false},
 	{Name: "graph/list.schema.graphqls", Input: `type List {
   _id: ID!
@@ -436,6 +498,11 @@ input ChangeListOrder {
   srcIdx: Int!
   destIdx: Int!
 }
+
+input ListIdentifier {
+  _id: ID!
+  parentBoardId: ID!
+}
 `, BuiltIn: false},
 	{Name: "graph/mutation.schema.graphqls", Input: `type Mutation {
   createCard(card: NewCard!): Card!
@@ -444,6 +511,12 @@ input ChangeListOrder {
 
   updateCardOrder(changeCardOrder: ChangeCardOrder!): Boolean!
   updateListOrder(changeListOrder: ChangeListOrder!): Boolean!
+
+  archiveCard(card: CardIdentifier!): Boolean!
+  archiveList(list: ListIdentifier!): Boolean!
+
+  deleteCard(card: CardIdentifier!): Boolean!
+  deleteList(list: ListIdentifier!): Boolean!
 }
 `, BuiltIn: false},
 	{Name: "graph/query.schema.graphqls", Input: `type Query {
@@ -458,6 +531,36 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 // endregion ************************** generated!.gotpl **************************
 
 // region    ***************************** args.gotpl *****************************
+
+func (ec *executionContext) field_Mutation_archiveCard_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.CardIdentifier
+	if tmp, ok := rawArgs["card"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("card"))
+		arg0, err = ec.unmarshalNCardIdentifier2githubᚗcomᚋjx3yangᚋProductivityTrackerᚋsrcᚋbackendᚋgraphᚋmodelᚐCardIdentifier(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["card"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_archiveList_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.ListIdentifier
+	if tmp, ok := rawArgs["list"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("list"))
+		arg0, err = ec.unmarshalNListIdentifier2githubᚗcomᚋjx3yangᚋProductivityTrackerᚋsrcᚋbackendᚋgraphᚋmodelᚐListIdentifier(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["list"] = arg0
+	return args, nil
+}
 
 func (ec *executionContext) field_Mutation_createBoard_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
@@ -496,6 +599,36 @@ func (ec *executionContext) field_Mutation_createList_args(ctx context.Context, 
 	if tmp, ok := rawArgs["list"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("list"))
 		arg0, err = ec.unmarshalNNewList2githubᚗcomᚋjx3yangᚋProductivityTrackerᚋsrcᚋbackendᚋgraphᚋmodelᚐNewList(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["list"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_deleteCard_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.CardIdentifier
+	if tmp, ok := rawArgs["card"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("card"))
+		arg0, err = ec.unmarshalNCardIdentifier2githubᚗcomᚋjx3yangᚋProductivityTrackerᚋsrcᚋbackendᚋgraphᚋmodelᚐCardIdentifier(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["card"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_deleteList_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.ListIdentifier
+	if tmp, ok := rawArgs["list"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("list"))
+		arg0, err = ec.unmarshalNListIdentifier2githubᚗcomᚋjx3yangᚋProductivityTrackerᚋsrcᚋbackendᚋgraphᚋmodelᚐListIdentifier(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -1339,6 +1472,174 @@ func (ec *executionContext) _Mutation_updateListOrder(ctx context.Context, field
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
 		return ec.resolvers.Mutation().UpdateListOrder(rctx, args["changeListOrder"].(model.ChangeListOrder))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_archiveCard(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_archiveCard_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().ArchiveCard(rctx, args["card"].(model.CardIdentifier))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_archiveList(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_archiveList_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().ArchiveList(rctx, args["list"].(model.ListIdentifier))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_deleteCard(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_deleteCard_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().DeleteCard(rctx, args["card"].(model.CardIdentifier))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_deleteList(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_deleteList_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().DeleteList(rctx, args["list"].(model.ListIdentifier))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2639,6 +2940,42 @@ func (ec *executionContext) ___Type_ofType(ctx context.Context, field graphql.Co
 
 // region    **************************** input.gotpl *****************************
 
+func (ec *executionContext) unmarshalInputCardIdentifier(ctx context.Context, obj interface{}) (model.CardIdentifier, error) {
+	var it model.CardIdentifier
+	var asMap = obj.(map[string]interface{})
+
+	for k, v := range asMap {
+		switch k {
+		case "_id":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("_id"))
+			it.ID, err = ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "parentListId":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("parentListId"))
+			it.ParentListID, err = ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "parentBoardId":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("parentBoardId"))
+			it.ParentBoardID, err = ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputChangeCardOrder(ctx context.Context, obj interface{}) (model.ChangeCardOrder, error) {
 	var it model.ChangeCardOrder
 	var asMap = obj.(map[string]interface{})
@@ -2734,6 +3071,34 @@ func (ec *executionContext) unmarshalInputChangeListOrder(ctx context.Context, o
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("destIdx"))
 			it.DestIdx, err = ec.unmarshalNInt2int(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputListIdentifier(ctx context.Context, obj interface{}) (model.ListIdentifier, error) {
+	var it model.ListIdentifier
+	var asMap = obj.(map[string]interface{})
+
+	for k, v := range asMap {
+		switch k {
+		case "_id":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("_id"))
+			it.ID, err = ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "parentBoardId":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("parentBoardId"))
+			it.ParentBoardID, err = ec.unmarshalNID2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -3031,6 +3396,26 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			}
 		case "updateListOrder":
 			out.Values[i] = ec._Mutation_updateListOrder(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "archiveCard":
+			out.Values[i] = ec._Mutation_archiveCard(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "archiveList":
+			out.Values[i] = ec._Mutation_archiveList(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "deleteCard":
+			out.Values[i] = ec._Mutation_deleteCard(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "deleteList":
+			out.Values[i] = ec._Mutation_deleteList(ctx, field)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
@@ -3405,6 +3790,11 @@ func (ec *executionContext) marshalNCard2ᚖgithubᚗcomᚋjx3yangᚋProductivit
 	return ec._Card(ctx, sel, v)
 }
 
+func (ec *executionContext) unmarshalNCardIdentifier2githubᚗcomᚋjx3yangᚋProductivityTrackerᚋsrcᚋbackendᚋgraphᚋmodelᚐCardIdentifier(ctx context.Context, v interface{}) (model.CardIdentifier, error) {
+	res, err := ec.unmarshalInputCardIdentifier(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) marshalNCardMetaData2ᚖgithubᚗcomᚋjx3yangᚋProductivityTrackerᚋsrcᚋbackendᚋgraphᚋmodelᚐCardMetaData(ctx context.Context, sel ast.SelectionSet, v *model.CardMetaData) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -3467,6 +3857,11 @@ func (ec *executionContext) marshalNList2ᚖgithubᚗcomᚋjx3yangᚋProductivit
 		return graphql.Null
 	}
 	return ec._List(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNListIdentifier2githubᚗcomᚋjx3yangᚋProductivityTrackerᚋsrcᚋbackendᚋgraphᚋmodelᚐListIdentifier(ctx context.Context, v interface{}) (model.ListIdentifier, error) {
+	res, err := ec.unmarshalInputListIdentifier(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalNNewBoard2githubᚗcomᚋjx3yangᚋProductivityTrackerᚋsrcᚋbackendᚋgraphᚋmodelᚐNewBoard(ctx context.Context, v interface{}) (model.NewBoard, error) {
