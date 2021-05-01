@@ -226,40 +226,26 @@ func ArchiveCard(card *model.CardIdentifier) (bool, error) {
 	operation := func(sessCtx mongo.SessionContext) (interface{}, error) {
 		res, err := listCollection.FindByID(card.ParentListID, sessCtx)
 		if err != nil {
-			return nil, err
+			return false, err
 		}
 		list := db.List{}
 		res.Decode(&list)
 
 		if list.ParentBoardID != card.ParentBoardID {
-			return nil, errors.New("The list with id " + card.ParentListID + " does not belong to board " + card.ParentBoardID)
+			return false, errors.New("The list with id " + card.ParentListID + " does not belong to board " + card.ParentBoardID)
 		}
 
-		targetIdx := -1
-		for idx, cardID := range list.CardOrder {
-			if cardID == card.ID {
-				targetIdx = idx
-				break
-			}
-		}
+		targetIdx := findFirstIndex(list.CardOrder, func(elem string) bool { return card.ID == elem })
 		if targetIdx == -1 {
-			return nil, errors.New("Card with id " + card.ID + " does not belong to list " + card.ParentListID)
+			return false, errors.New("Card with id " + card.ID + " does not belong to list " + card.ParentListID)
 		}
 
-		idx := 0
-		newOrder := make([]string, len(list.CardOrder)-1)
-		for i := 0; i < len(newOrder); i++ {
-			if idx == targetIdx {
-				idx++
-			}
-			newOrder[i] = list.CardOrder[idx]
-			idx++
-		}
+		newOrder := removeOneFromList(list.CardOrder, targetIdx)
 
 		listUpdate := bson.M{"$set": bson.M{constants.CardOrderField: newOrder}}
 		err = listCollection.UpdateByID(card.ParentListID, listUpdate, sessCtx)
 		if err != nil {
-			return nil, err
+			return false, err
 		}
 
 		cardUpdate := bson.M{"$set": bson.M{constants.ArchivedField: true}}

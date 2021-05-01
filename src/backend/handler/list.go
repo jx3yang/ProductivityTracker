@@ -166,7 +166,35 @@ func UpdateListOrder(changeListOrder *model.ChangeListOrder) (bool, error) {
 }
 
 func ArchiveList(list *model.ListIdentifier) (bool, error) {
-	return true, nil
+	operation := func(sessCtx mongo.SessionContext) (interface{}, error) {
+		res, err := boardCollection.FindByID(list.ParentBoardID, sessCtx)
+		if err != nil {
+			return false, err
+		}
+		board := db.Board{}
+		res.Decode(&board)
+
+		targetIdx := findFirstIndex(board.ListOrder, func(elem string) bool { return list.ID == elem })
+		if targetIdx == -1 {
+			return false, errors.New("List with id " + list.ID + " does not belong to board " + list.ParentBoardID)
+		}
+
+		newOrder := removeOneFromList(board.ListOrder, targetIdx)
+
+		boardUpdate := bson.M{"$set": bson.M{constants.ListOrderField: newOrder}}
+		err = boardCollection.UpdateByID(list.ParentBoardID, boardUpdate, sessCtx)
+		if err != nil {
+			return false, err
+		}
+
+		listUpdate := bson.M{"$set": bson.M{constants.ArchivedField: true}}
+		err = listCollection.UpdateByID(list.ID, listUpdate, sessCtx)
+
+		return err == nil, err
+	}
+
+	result, err := executeWithSession(operation)
+	return result.(bool), err
 }
 
 func DeleteList(list *model.ListIdentifier) (bool, error) {

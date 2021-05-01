@@ -21,7 +21,9 @@ func (coll *MongoCollection) FindByIDWithTimeout(ID string, timeout time.Duratio
 		ctx, cancel = context.WithTimeout(context.Background(), timeout)
 		defer cancel()
 	}
-	return coll.collection.FindOne(ctx, bson.M{constants.IDField: ObjectID}), nil
+
+	res := coll.collection.FindOne(ctx, bson.M{constants.IDField: ObjectID})
+	return res, res.Err()
 }
 
 func (coll *MongoCollection) FindByID(ID string, ctx context.Context) (*mongo.SingleResult, error) {

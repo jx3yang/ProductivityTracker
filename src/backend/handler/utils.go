@@ -54,3 +54,12 @@ func addOneToList(list []string, idx int, elem string) []string {
 
 	return newList
 }
+
+func findFirstIndex(list []string, isMatch func(elem string) bool) int {
+	for idx, elem := range list {
+		if isMatch(elem) {
+			return idx
+		}
+	}
+	return -1
+}
